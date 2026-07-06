@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="峰股top - A股涨停情绪数据中心" />
+    <title>峰股top | A股涨停情绪数据中心</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">峰</div>
+          <div>
+            <h1>峰股top</h1>
+            <p>A股涨停情绪数据中心</p>
+          </div>
+        </div>
+
+        <nav class="side-nav" aria-label="主导航">
+          <button class="active">首页概览</button>
+          <button>今日涨停</button>
+          <button>个股统计</button>
+          <button>连板统计</button>
+          <button>历史数据</button>
+          <button>排行榜</button>
+          <button>数据中心</button>
+        </nav>
+
+        <div class="source-note">
+          <span>数据源：AKShare 原型</span>
+          <span>更新时间：{{ data.meta.updated_at || '--' }}</span>
+        </div>
+      </aside>
+
+      <main class="shell">
+        <header class="topbar">
+          <div class="tabs">
+            <button class="active">首页</button>
+            <button>涨停汇总</button>
+            <button>个股统计</button>
+            <button>连板统计</button>
+            <button>排行榜</button>
+          </div>
+
+          <label class="search">
+            <span>搜索</span>
+            <input v-model.trim="query" type="search" placeholder="搜索股票代码 / 名称" />
+          </label>
+        </header>
+
+        <section v-if="loadError" class="notice">
+          <strong>数据暂时不可用</strong>
+          <span>{{ loadError }}</span>
+        </section>
+
+        <section class="metric-grid" aria-label="市场情绪概览">
+          <article v-for="card in metricCards" :key="card.label" class="metric-card">
+            <span class="metric-label">{{ card.label }}</span>
+            <div class="metric-value">
+              <strong>{{ card.value }}</strong>
+              <span>{{ card.unit }}</span>
+            </div>
+            <small>{{ card.caption }}</small>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <article class="panel table-panel">
+            <div class="panel-head">
+              <h2>今日涨停股票汇总</h2>
+              <select v-model="boardFilter" aria-label="连板筛选">
+                <option value="all">全部</option>
+                <option value="1">首板</option>
+                <option value="2">2板</option>
+                <option value="3">3板</option>
+                <option value="4">4板</option>
+                <option value="5">5板+</option>
+              </select>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>代码</th>
+                    <th>名称</th>
+                    <th>首次封板</th>
+                    <th>最后封板</th>
+                    <th>概念/行业</th>
+                    <th>封单金额</th>
+                    <th>连板</th>
+                    <th>炸板</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="stock in filteredLimitUps" :key="stock.code">
+                    <td>{{ stock.code }}</td>
+                    <td class="stock-name">{{ stock.name }}</td>
+                    <td>{{ stock.first_limit_time || '--' }}</td>
+                    <td>{{ stock.last_limit_time || '--' }}</td>
+                    <td>{{ stock.concept || stock.industry || '--' }}</td>
+                    <td>{{ formatMoney(stock.seal_amount) }}</td>
+                    <td><span class="badge hot">{{ stock.consecutive_days || 1 }}</span></td>
+                    <td>{{ stock.open_times ?? 0 }}</td>
+                  </tr>
+                  <tr v-if="!filteredLimitUps.length">
+                    <td colspan="8" class="empty">暂无匹配数据</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>连板分布</h2>
+              <span>{{ totalLimitUps }} 只</span>
+            </div>
+            <div class="bars">
+              <div v-for="item in boardDistribution" :key="item.label" class="bar-row">
+                <span>{{ item.label }}</span>
+                <div class="bar-track">
+                  <i :style="{ width: item.width + '%' }"></i>
+                </div>
+                <strong>{{ item.count }}只</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel stock-panel">
+            <div class="panel-head">
+              <h2>个股涨停统计</h2>
+              <input v-model.trim="statQuery" placeholder="输入股票代码或名称" />
+            </div>
+            <div v-if="selectedStock" class="stock-detail">
+              <div>
+                <strong>{{ selectedStock.code }}</strong>
+                <h3>{{ selectedStock.name }}</h3>
+                <p>{{ selectedStock.concept || selectedStock.industry || '暂无概念标签' }}</p>
+              </div>
+              <dl>
+                <div><dt>7日</dt><dd>{{ selectedStock.stats.limit_count_7d }}次</dd></div>
+                <div><dt>30日</dt><dd>{{ selectedStock.stats.limit_count_30d }}次</dd></div>
+                <div><dt>一年</dt><dd>{{ selectedStock.stats.limit_count_1y }}次</dd></div>
+                <div><dt>最高连板</dt><dd>{{ selectedStock.stats.max_consecutive_days }}天</dd></div>
+              </dl>
+              <span>最近涨停：{{ selectedStock.stats.last_limit_date || '--' }}</span>
+            </div>
+            <div v-else class="empty block-empty">输入代码或名称查看统计</div>
+          </article>
+
+          <article class="panel wide">
+            <div class="panel-head">
+              <h2>断板 / 炸板观察</h2>
+              <span>风险池</span>
+            </div>
+            <div class="compact-list">
+              <div v-for="item in brokenWatch.slice(0, 8)" :key="item.code">
+                <span>{{ item.code }}</span>
+                <strong>{{ item.name }}</strong>
+                <em>{{ item.reason || item.concept || '炸板观察' }}</em>
+              </div>
+              <div v-if="!brokenWatch.length" class="empty block-empty">暂无炸板数据</div>
+            </div>
+          </article>
+
+          <aside class="right-rail">
+            <article class="panel">
+              <div class="panel-head">
+                <h2>最高连板排行</h2>
+              </div>
+              <ol class="rank-list">
+                <li v-for="stock in highestBoardRank" :key="stock.code">
+                  <span>{{ stock.name }}</span>
+                  <strong>{{ stock.consecutive_days }}板</strong>
+                </li>
+              </ol>
+            </article>
+
+            <article class="panel heat-panel">
+              <div class="panel-head">
+                <h2>涨停热力图</h2>
+              </div>
+              <div class="heat-grid">
+                <button v-for="item in heatMap" :key="item.name">
+                  <strong>{{ item.name }}</strong>
+                  <span>{{ item.count }}只</span>
+                </button>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <h2>近30天涨停次数榜</h2>
+              </div>
+              <ol class="rank-list">
+                <li v-for="stock in thirtyDayRank" :key="stock.code">
+                  <span>{{ stock.name }}</span>
+                  <strong>{{ stock.stats.limit_count_30d }}次</strong>
+                </li>
+              </ol>
+            </article>
+          </aside>
+        </section>
+      </main>
+    </div>
+
+    <script src="./src/fallback-data.js"></script>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
