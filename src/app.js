@@ -17,6 +17,11 @@ function normalizeText(value) {
   return String(value ?? "").trim().toLowerCase();
 }
 
+function percent(value) {
+  const parsed = numberValue(value);
+  return `${parsed.toFixed(2)}%`;
+}
+
 createApp({
   setup() {
     const data = ref(window.__FENGGU_FALLBACK_DATA__ || emptyData);
@@ -48,6 +53,8 @@ createApp({
 
     const limitUps = computed(() => data.value.limit_ups || []);
     const brokenWatch = computed(() => data.value.broken_limits || []);
+    const limitDowns = computed(() => data.value.limit_downs || []);
+    const allStats = computed(() => data.value.stats || []);
     const totalLimitUps = computed(() => numberValue(data.value.sentiment.limit_up_count, limitUps.value.length));
     const highestBoard = computed(() => Math.max(0, ...limitUps.value.map((item) => numberValue(item.consecutive_days, 1))));
     const brokenRate = computed(() => {
@@ -57,7 +64,7 @@ createApp({
     });
 
     const metricCards = computed(() => [
-      { label: "今日涨停", value: totalLimitUps.value, unit: "只", caption: "收盘后自动更新" },
+      { label: "今日涨停", value: totalLimitUps.value, unit: "只", caption: data.value.meta.trade_date || "收盘后自动更新" },
       {
         label: "连板股",
         value: limitUps.value.filter((item) => numberValue(item.consecutive_days, 1) >= 2).length,
@@ -65,6 +72,7 @@ createApp({
         caption: "2板及以上",
       },
       { label: "炸板股", value: numberValue(data.value.sentiment.broken_limit_count, brokenWatch.value.length), unit: "只", caption: "盘中打开涨停" },
+      { label: "今日跌停", value: numberValue(data.value.sentiment.limit_down_count, limitDowns.value.length), unit: "只", caption: "跌停池同步统计" },
       { label: "炸板率", value: `${brokenRate.value}%`, unit: "", caption: "炸板 / 涨停炸板合计" },
       { label: "市场最高板", value: highestBoard.value, unit: "板", caption: highestBoard.value >= 5 ? "高位活跃" : "情绪观察" },
     ]);
@@ -127,10 +135,14 @@ createApp({
 
     const selectedStock = computed(() => {
       const term = normalizeText(statQuery.value || query.value);
-      if (!term) return enrichedStocks.value[0];
-      return enrichedStocks.value.find(
+      const todayMatch = !term ? enrichedStocks.value[0] : enrichedStocks.value.find(
         (stock) => normalizeText(stock.code).includes(term) || normalizeText(stock.name).includes(term),
       );
+      if (todayMatch) return todayMatch;
+      const statMatch = allStats.value.find(
+        (stock) => normalizeText(stock.code).includes(term) || normalizeText(stock.name).includes(term),
+      );
+      return statMatch ? { ...statMatch, stats: statMatch } : null;
     });
 
     const highestBoardRank = computed(() =>
@@ -140,8 +152,8 @@ createApp({
     );
 
     const thirtyDayRank = computed(() =>
-      [...enrichedStocks.value]
-        .sort((a, b) => numberValue(b.stats.limit_count_30d) - numberValue(a.stats.limit_count_30d))
+      [...allStats.value]
+        .sort((a, b) => numberValue(b.limit_count_30d) - numberValue(a.limit_count_30d))
         .slice(0, 6),
     );
 
@@ -165,6 +177,14 @@ createApp({
       return String(amount);
     }
 
+    function formatPercent(value) {
+      return percent(value);
+    }
+
+    function formatReason(stock) {
+      return stock.reason || stock.concept || stock.industry || stock.limit_stats || "--";
+    }
+
     return {
       data,
       loadError,
@@ -177,10 +197,13 @@ createApp({
       boardDistribution,
       selectedStock,
       brokenWatch,
+      limitDowns,
       highestBoardRank,
       thirtyDayRank,
       heatMap,
       formatMoney,
+      formatPercent,
+      formatReason,
     };
   },
 }).mount("#app");
