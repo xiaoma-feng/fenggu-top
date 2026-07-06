@@ -4,10 +4,17 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "scripts/update_data.py"
+      - "requirements.txt"
+      - ".github/workflows/update-data.yml"
   workflow_dispatch:
     inputs:
       trade_date:
         description: "Optional trade date, for example 2026-07-06"
+        required: false
+      stats_lookback_days:
+        description: "Optional statistics lookback days; default is 370"
         required: false
   schedule:
     - cron: "30 7 * * 1-5"
@@ -33,11 +40,14 @@ jobs:
 
       - name: Update data
         run: |
+          ARGS=""
           if [ -n "${{ github.event.inputs.trade_date }}" ]; then
-            python scripts/update_data.py --date "${{ github.event.inputs.trade_date }}"
-          else
-            python scripts/update_data.py
+            ARGS="$ARGS --date ${{ github.event.inputs.trade_date }}"
           fi
+          if [ -n "${{ github.event.inputs.stats_lookback_days }}" ]; then
+            ARGS="$ARGS --stats-lookback-days ${{ github.event.inputs.stats_lookback_days }}"
+          fi
+          python scripts/update_data.py $ARGS
 
       - name: Commit data files
         uses: stefanzweifel/git-auto-commit-action@v5
