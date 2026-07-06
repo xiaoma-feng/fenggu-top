@@ -198,7 +198,7 @@ button {
 .metric-grid {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   margin: 16px 0 14px;
 }
 
@@ -233,6 +233,7 @@ button {
 .metric-card:nth-child(3) { color: var(--blue); }
 .metric-card:nth-child(4) { color: var(--purple); }
 .metric-card:nth-child(5) { color: var(--green); }
+.metric-card:nth-child(6) { color: var(--green); }
 
 .metric-label {
   display: block;
@@ -324,7 +325,7 @@ button {
 
 table {
   border-collapse: collapse;
-  min-width: 760px;
+  min-width: 1320px;
   width: 100%;
 }
 
@@ -350,6 +351,16 @@ td {
 
 .stock-name {
   font-weight: 700;
+}
+
+.up-text {
+  color: #ff6b7c;
+  font-weight: 800;
+}
+
+.down-text {
+  color: #48d597;
+  font-weight: 800;
 }
 
 .badge {
