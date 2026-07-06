@@ -1,0 +1,170 @@
+{
+  "meta": {
+    "site_name": "峰股top",
+    "trade_date": "2026-07-06",
+    "updated_at": "2026-07-06 15:30",
+    "source": "demo"
+  },
+  "sentiment": {
+    "limit_up_count": 12,
+    "limit_down_count": 3,
+    "broken_limit_count": 5,
+    "highest_board": 5
+  },
+  "limit_ups": [
+    {
+      "code": "002261",
+      "name": "拓维信息",
+      "first_limit_time": "09:30:18",
+      "last_limit_time": "14:54:12",
+      "concept": "人工智能",
+      "industry": "软件服务",
+      "seal_amount": 321000000,
+      "consecutive_days": 5,
+      "open_times": 1,
+      "reason": "AI应用爆发"
+    },
+    {
+      "code": "603019",
+      "name": "中科曙光",
+      "first_limit_time": "09:35:21",
+      "last_limit_time": "14:55:47",
+      "concept": "算力概念",
+      "industry": "计算机设备",
+      "seal_amount": 291000000,
+      "consecutive_days": 4,
+      "open_times": 2,
+      "reason": "算力需求增长"
+    },
+    {
+      "code": "300750",
+      "name": "宁德时代",
+      "first_limit_time": "09:42:21",
+      "last_limit_time": "14:56:45",
+      "concept": "新能源车",
+      "industry": "电池",
+      "seal_amount": 615000000,
+      "consecutive_days": 3,
+      "open_times": 0,
+      "reason": "锂电池概念"
+    },
+    {
+      "code": "002594",
+      "name": "比亚迪",
+      "first_limit_time": "09:33:15",
+      "last_limit_time": "14:56:01",
+      "concept": "新能源车",
+      "industry": "汽车整车",
+      "seal_amount": 862000000,
+      "consecutive_days": 2,
+      "open_times": 1,
+      "reason": "新能源车利好"
+    },
+    {
+      "code": "000858",
+      "name": "五粮液",
+      "first_limit_time": "09:47:15",
+      "last_limit_time": "14:56:33",
+      "concept": "白酒概念",
+      "industry": "酿酒",
+      "seal_amount": 195000000,
+      "consecutive_days": 1,
+      "open_times": 1,
+      "reason": "消费修复"
+    },
+    {
+      "code": "600519",
+      "name": "贵州茅台",
+      "first_limit_time": "09:31:02",
+      "last_limit_time": "14:55:33",
+      "concept": "白酒概念",
+      "industry": "酿酒",
+      "seal_amount": 235000000,
+      "consecutive_days": 1,
+      "open_times": 0,
+      "reason": "业绩增长"
+    }
+  ],
+  "broken_limits": [
+    {
+      "code": "000001",
+      "name": "平安银行",
+      "concept": "金融",
+      "reason": "封单减弱"
+    },
+    {
+      "code": "601318",
+      "name": "中国平安",
+      "concept": "保险",
+      "reason": "尾盘炸板"
+    },
+    {
+      "code": "300059",
+      "name": "东方财富",
+      "concept": "证券",
+      "reason": "反复开板"
+    }
+  ],
+  "stats": [
+    {
+      "code": "002261",
+      "name": "拓维信息",
+      "limit_count_7d": 3,
+      "limit_count_30d": 7,
+      "limit_count_1y": 18,
+      "total_limit_count": 42,
+      "max_consecutive_days": 7,
+      "last_limit_date": "2026-07-06"
+    },
+    {
+      "code": "603019",
+      "name": "中科曙光",
+      "limit_count_7d": 2,
+      "limit_count_30d": 6,
+      "limit_count_1y": 15,
+      "total_limit_count": 26,
+      "max_consecutive_days": 4,
+      "last_limit_date": "2026-07-06"
+    },
+    {
+      "code": "300750",
+      "name": "宁德时代",
+      "limit_count_7d": 1,
+      "limit_count_30d": 4,
+      "limit_count_1y": 12,
+      "total_limit_count": 24,
+      "max_consecutive_days": 3,
+      "last_limit_date": "2026-07-06"
+    },
+    {
+      "code": "002594",
+      "name": "比亚迪",
+      "limit_count_7d": 1,
+      "limit_count_30d": 5,
+      "limit_count_1y": 16,
+      "total_limit_count": 28,
+      "max_consecutive_days": 6,
+      "last_limit_date": "2026-07-06"
+    },
+    {
+      "code": "000858",
+      "name": "五粮液",
+      "limit_count_7d": 1,
+      "limit_count_30d": 2,
+      "limit_count_1y": 7,
+      "total_limit_count": 14,
+      "max_consecutive_days": 3,
+      "last_limit_date": "2026-07-06"
+    },
+    {
+      "code": "600519",
+      "name": "贵州茅台",
+      "limit_count_7d": 1,
+      "limit_count_30d": 3,
+      "limit_count_1y": 9,
+      "total_limit_count": 16,
+      "max_consecutive_days": 2,
+      "last_limit_date": "2026-07-06"
+    }
+  ]
+}
