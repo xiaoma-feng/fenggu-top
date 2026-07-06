@@ -29,7 +29,8 @@
         </nav>
 
         <div class="source-note">
-          <span>数据源：AKShare 原型</span>
+          <span>数据源：AKShare / 东方财富专题</span>
+          <span>交易日：{{ data.meta.trade_date || '--' }}</span>
           <span>更新时间：{{ data.meta.updated_at || '--' }}</span>
         </div>
       </aside>
@@ -86,27 +87,37 @@
                   <tr>
                     <th>代码</th>
                     <th>名称</th>
+                    <th>涨幅</th>
+                    <th>最新价</th>
                     <th>首次封板</th>
                     <th>最后封板</th>
-                    <th>概念/行业</th>
+                    <th>行业/原因</th>
+                    <th>成交额</th>
+                    <th>换手率</th>
                     <th>封单金额</th>
                     <th>连板</th>
                     <th>炸板</th>
+                    <th>涨停统计</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="stock in filteredLimitUps" :key="stock.code">
                     <td>{{ stock.code }}</td>
                     <td class="stock-name">{{ stock.name }}</td>
+                    <td class="up-text">{{ formatPercent(stock.change_pct) }}</td>
+                    <td>{{ stock.latest_price || '--' }}</td>
                     <td>{{ stock.first_limit_time || '--' }}</td>
                     <td>{{ stock.last_limit_time || '--' }}</td>
-                    <td>{{ stock.concept || stock.industry || '--' }}</td>
+                    <td>{{ formatReason(stock) }}</td>
+                    <td>{{ formatMoney(stock.turnover_amount) }}</td>
+                    <td>{{ formatPercent(stock.turnover_rate) }}</td>
                     <td>{{ formatMoney(stock.seal_amount) }}</td>
                     <td><span class="badge hot">{{ stock.consecutive_days || 1 }}</span></td>
                     <td>{{ stock.open_times ?? 0 }}</td>
+                    <td>{{ stock.limit_stats || '--' }}</td>
                   </tr>
                   <tr v-if="!filteredLimitUps.length">
-                    <td colspan="8" class="empty">暂无匹配数据</td>
+                    <td colspan="13" class="empty">暂无匹配数据</td>
                   </tr>
                 </tbody>
               </table>
@@ -160,7 +171,7 @@
               <div v-for="item in brokenWatch.slice(0, 8)" :key="item.code">
                 <span>{{ item.code }}</span>
                 <strong>{{ item.name }}</strong>
-                <em>{{ item.reason || item.concept || '炸板观察' }}</em>
+                <em>{{ formatPercent(item.change_pct) }} / 炸{{ item.open_times || 0 }}次</em>
               </div>
               <div v-if="!brokenWatch.length" class="empty block-empty">暂无炸板数据</div>
             </div>
@@ -198,7 +209,19 @@
               <ol class="rank-list">
                 <li v-for="stock in thirtyDayRank" :key="stock.code">
                   <span>{{ stock.name }}</span>
-                  <strong>{{ stock.stats.limit_count_30d }}次</strong>
+                  <strong>{{ stock.limit_count_30d }}次</strong>
+                </li>
+              </ol>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <h2>跌停观察</h2>
+              </div>
+              <ol class="rank-list">
+                <li v-for="stock in limitDowns.slice(0, 6)" :key="stock.code">
+                  <span>{{ stock.name }}</span>
+                  <strong>{{ formatPercent(stock.change_pct) }}</strong>
                 </li>
               </ol>
             </article>
