@@ -1,0 +1,43 @@
+name: Update market data
+
+on:
+  workflow_dispatch:
+    inputs:
+      trade_date:
+        description: "Optional trade date, for example 2026-07-06"
+        required: false
+  schedule:
+    - cron: "30 7 * * 1-5"
+
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Update data
+        run: |
+          if [ -n "${{ github.event.inputs.trade_date }}" ]; then
+            python scripts/update_data.py --date "${{ github.event.inputs.trade_date }}"
+          else
+            python scripts/update_data.py
+          fi
+
+      - name: Commit data files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update market data"
+          file_pattern: "data/*.json data/history/*.json"
