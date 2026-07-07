@@ -154,7 +154,14 @@ button {
   color: #fff;
 }
 
-.search {
+.top-tools {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.search,
+.date-picker {
   align-items: center;
   background: rgba(12, 19, 35, 0.9);
   border: 1px solid rgba(121, 146, 184, 0.24);
@@ -165,12 +172,18 @@ button {
   width: 270px;
 }
 
-.search span {
+.date-picker {
+  width: 172px;
+}
+
+.search span,
+.date-picker span {
   color: var(--muted);
   font-size: 12px;
 }
 
 .search input,
+.date-picker select,
 .panel input,
 .panel select {
   background: transparent;
@@ -180,6 +193,11 @@ button {
 }
 
 .search input {
+  height: 42px;
+  width: 100%;
+}
+
+.date-picker select {
   height: 42px;
   width: 100%;
 }
@@ -310,6 +328,29 @@ button {
   border-radius: 5px;
   height: 34px;
   padding: 0 10px;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.table-actions button {
+  background: #0c1425;
+  border: 1px solid rgba(121, 146, 184, 0.22);
+  border-radius: 5px;
+  color: var(--text);
+  height: 34px;
+  padding: 0 12px;
+}
+
+.table-actions .primary-action {
+  background: linear-gradient(135deg, rgba(255, 64, 88, 0.9), rgba(255, 147, 68, 0.85));
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-weight: 700;
 }
 
 .table-panel,
@@ -624,7 +665,14 @@ td {
     overflow-x: auto;
   }
 
-  .search {
+  .top-tools {
+    align-items: stretch;
+    display: grid;
+    margin-top: 12px;
+  }
+
+  .search,
+  .date-picker {
     margin-top: 12px;
     width: 100%;
   }
@@ -635,5 +683,14 @@ td {
 
   .panel {
     margin-bottom: 12px;
+  }
+
+  .panel-head {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .table-actions {
+    justify-content: flex-start;
   }
 }
