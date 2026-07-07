@@ -33,32 +33,58 @@ createApp({
     const statQuery = ref("");
     const boardFilter = ref("all");
     const sortKey = ref("first_limit_time");
+    const selectedDate = ref("");
     const activeSection = ref("overview");
     const navItems = [
       { key: "overview", label: "首页概览", target: "overview-section" },
-      { key: "limitups", label: "今日涨停", target: "limitups-section" },
+      { key: "limitups", label: "涨停汇总", target: "limitups-section" },
       { key: "stats", label: "个股统计", target: "stats-section" },
       { key: "boards", label: "连板统计", target: "boards-section" },
       { key: "rankings", label: "排行榜", target: "rankings-section" },
       { key: "data", label: "数据中心", target: "data-section" },
     ];
 
+    async function fetchJson(path) {
+      const response = await fetch(path, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return response.json();
+    }
+
     async function loadData() {
       if (window.location.protocol === "file:") {
         data.value = window.__FENGGU_FALLBACK_DATA__ || emptyData;
+        selectedDate.value = data.value.meta.trade_date || "";
         return;
       }
 
       try {
-        const response = await fetch("./data/latest.json", { cache: "no-store" });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        data.value = await response.json();
+        data.value = await fetchJson("./data/latest.json");
+        selectedDate.value = data.value.meta.trade_date || "";
       } catch (error) {
         loadError.value = "未能读取 data/latest.json，当前显示内置演示数据。";
         console.warn(error);
         data.value = window.__FENGGU_FALLBACK_DATA__ || emptyData;
+        selectedDate.value = data.value.meta.trade_date || "";
+      }
+    }
+
+    async function loadDate(date) {
+      if (!date || date === data.value.meta.trade_date) return;
+      if (window.location.protocol === "file:") {
+        selectedDate.value = data.value.meta.trade_date || "";
+        return;
+      }
+      try {
+        loadError.value = "";
+        data.value = await fetchJson(`./data/history/${date}.json`);
+        selectedDate.value = data.value.meta.trade_date || date;
+        clearFilters();
+      } catch (error) {
+        loadError.value = `未能读取 ${date} 的历史数据。`;
+        console.warn(error);
+        selectedDate.value = data.value.meta.trade_date || "";
       }
     }
 
@@ -70,7 +96,20 @@ createApp({
     const strongStocks = computed(() => data.value.strong_stocks || []);
     const subNewStocks = computed(() => data.value.sub_new_stocks || []);
     const allStats = computed(() => data.value.stats || []);
+    const availableDates = computed(() => data.value.meta.available_dates || (data.value.meta.trade_date ? [data.value.meta.trade_date] : []));
     const totalLimitUps = computed(() => numberValue(data.value.sentiment.limit_up_count, limitUps.value.length));
+    const todayText = new Date().toLocaleDateString("zh-CN", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).replaceAll("/", "-");
+    const isLatestClosedSession = computed(() => data.value.meta.trade_date && data.value.meta.trade_date !== todayText);
+    const dataScopeText = computed(() =>
+      isLatestClosedSession.value
+        ? `当前显示最近已收盘交易日 ${data.value.meta.trade_date}，当天收盘后 ${data.value.meta.market_data_ready_time || "15:30"} 再更新。`
+        : `当前显示 ${data.value.meta.trade_date || "最新"} 数据。`,
+    );
     const highestBoard = computed(() => Math.max(0, ...limitUps.value.map((item) => numberValue(item.consecutive_days, 1))));
     const brokenRate = computed(() => {
       const broken = numberValue(data.value.sentiment.broken_limit_count, brokenWatch.value.length);
@@ -79,7 +118,7 @@ createApp({
     });
 
     const metricCards = computed(() => [
-      { label: "今日涨停", value: totalLimitUps.value, unit: "只", caption: data.value.meta.trade_date || "收盘后自动更新" },
+      { label: "收盘涨停", value: totalLimitUps.value, unit: "只", caption: data.value.meta.trade_date || "收盘后自动更新" },
       {
         label: "连板股",
         value: numberValue(
@@ -288,9 +327,13 @@ createApp({
       statQuery,
       boardFilter,
       sortKey,
+      selectedDate,
       activeSection,
       navItems,
+      availableDates,
       metricCards,
+      dataScopeText,
+      isLatestClosedSession,
       totalLimitUps,
       filteredLimitUps,
       sortedLimitUps,
@@ -310,6 +353,7 @@ createApp({
       formatReason,
       clearFilters,
       exportLimitUps,
+      loadDate,
       scrollToSection,
     };
   },
