@@ -5,17 +5,19 @@ import json
 import math
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, time as datetime_time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 HISTORY_DIR = DATA_DIR / "history"
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 DEFAULT_STATS_LOOKBACK_DAYS = 370
+MARKET_DATA_READY_TIME = datetime_time(15, 30)
 
 
 def clean_value(value):
@@ -32,7 +34,9 @@ def clean_value(value):
 
 def as_text(value):
     value = clean_value(value)
-    return "" if value is None else str(value).strip()
+    if value is None:
+        return ""
+    return str(value).strip()
 
 
 def as_number(value, fallback=0):
@@ -91,27 +95,38 @@ def normalize_time(value):
 
 def normalize_date(value):
     text = as_text(value)
+    if not text:
+        return ""
     if re.fullmatch(r"\d{8}", text):
         return f"{text[:4]}-{text[4:6]}-{text[6:8]}"
     return text
 
 
-def limit_stats_parts(value):
-    text = as_text(value)
-    match = re.search(r"(\d+)\s*/\s*(\d+)", text)
-    return {
-        "limit_days_in_window": int(match.group(1)) if match else 0,
-        "limit_days_window": int(match.group(2)) if match else 0,
-        "limit_stats": text,
-    }
+def previous_business_day(day):
+    current = day - timedelta(days=1)
+    while current.weekday() >= 5:
+        current -= timedelta(days=1)
+    return current
+
+
+def latest_completed_trade_date(now):
+    current = now.date()
+    if current.weekday() >= 5:
+        return previous_business_day(current)
+    if now.time() < MARKET_DATA_READY_TIME:
+        return previous_business_day(current)
+    return current
 
 
 def parse_consecutive(row):
     direct = pick(row, ["连板数", "连板", "连续涨停天数"])
     if direct is not None:
         return max(1, as_int(direct, 1))
-    match = re.search(r"(\d+)\s*板", as_text(pick(row, ["涨停统计", "封板结构"], "")))
-    return max(1, int(match.group(1))) if match else 1
+    text = as_text(pick(row, ["涨停统计", "涨停封板结构", "封板结构"], ""))
+    match = re.search(r"(\d+)\s*板", text)
+    if match:
+        return max(1, int(match.group(1)))
+    return 1
 
 
 def frame_records(df):
@@ -125,6 +140,7 @@ def call_akshare(name, *args, **kwargs):
         import akshare as ak
     except ImportError:
         return pd.DataFrame()
+
     func = getattr(ak, name, None)
     if func is None:
         return pd.DataFrame()
@@ -139,118 +155,149 @@ def call_akshare(name, *args, **kwargs):
         return pd.DataFrame()
 
 
+def limit_stats_parts(value):
+    text = as_text(value)
+    match = re.search(r"(\d+)\s*/\s*(\d+)", text)
+    if not match:
+        return {"limit_days_in_window": 0, "limit_days_window": 0, "limit_stats": text}
+    return {
+        "limit_days_in_window": int(match.group(1)),
+        "limit_days_window": int(match.group(2)),
+        "limit_stats": text,
+    }
+
+
 def fetch_limit_ups(trade_date):
+    raw = call_akshare("stock_zt_pool_em", date=trade_date)
     rows = []
-    for row in frame_records(call_akshare("stock_zt_pool_em", date=trade_date)):
-        rows.append({
-            "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
-            "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
-            "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
-            "latest_price": as_float(pick(row, ["最新价"], 0)),
-            "turnover_amount": as_number(pick(row, ["成交额"], 0)),
-            "float_market_cap": as_number(pick(row, ["流通市值"], 0)),
-            "total_market_cap": as_number(pick(row, ["总市值"], 0)),
-            "turnover_rate": as_float(pick(row, ["换手率"], 0)),
-            "first_limit_time": normalize_time(pick(row, ["首次封板时间", "首次涨停时间"])),
-            "last_limit_time": normalize_time(pick(row, ["最后封板时间", "最终封板时间"])),
-            "concept": as_text(pick(row, ["所属概念", "概念"], "")),
-            "industry": as_text(pick(row, ["所属行业", "行业"], "")),
-            "seal_amount": as_number(pick(row, ["封板资金", "封单资金", "封单金额"], 0)),
-            "consecutive_days": parse_consecutive(row),
-            "open_times": as_int(pick(row, ["炸板次数", "打开次数"], 0)),
-            "reason": as_text(pick(row, ["涨停原因", "涨停原因类别", "原因"], "")),
-            **limit_stats_parts(pick(row, ["涨停统计"], "")),
-        })
+    for row in frame_records(raw):
+        stats = limit_stats_parts(pick(row, ["涨停统计"], ""))
+        rows.append(
+            {
+                "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
+                "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
+                "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
+                "latest_price": as_float(pick(row, ["最新价"], 0)),
+                "turnover_amount": as_number(pick(row, ["成交额"], 0)),
+                "float_market_cap": as_number(pick(row, ["流通市值"], 0)),
+                "total_market_cap": as_number(pick(row, ["总市值"], 0)),
+                "turnover_rate": as_float(pick(row, ["换手率"], 0)),
+                "first_limit_time": normalize_time(pick(row, ["首次封板时间", "首次涨停时间"])),
+                "last_limit_time": normalize_time(pick(row, ["最后封板时间", "最终封板时间"])),
+                "concept": as_text(pick(row, ["所属概念", "概念"], "")),
+                "industry": as_text(pick(row, ["所属行业", "行业"], "")),
+                "seal_amount": as_number(pick(row, ["封板资金", "封单资金", "封单金额"], 0)),
+                "consecutive_days": parse_consecutive(row),
+                "open_times": as_int(pick(row, ["炸板次数", "打开次数"], 0)),
+                "reason": as_text(pick(row, ["涨停原因", "涨停原因类别", "原因"], "")),
+                **stats,
+            }
+        )
     return [row for row in rows if row["code"] and row["name"]]
 
 
 def fetch_broken_limits(trade_date):
+    raw = call_akshare("stock_zt_pool_zbgc_em", date=trade_date)
     rows = []
-    for row in frame_records(call_akshare("stock_zt_pool_zbgc_em", date=trade_date)):
-        rows.append({
-            "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
-            "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
-            "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
-            "latest_price": as_float(pick(row, ["最新价"], 0)),
-            "limit_price": as_float(pick(row, ["涨停价"], 0)),
-            "turnover_amount": as_number(pick(row, ["成交额"], 0)),
-            "float_market_cap": as_number(pick(row, ["流通市值"], 0)),
-            "total_market_cap": as_number(pick(row, ["总市值"], 0)),
-            "turnover_rate": as_float(pick(row, ["换手率"], 0)),
-            "speed": as_float(pick(row, ["涨速"], 0)),
-            "amplitude": as_float(pick(row, ["振幅"], 0)),
-            "first_limit_time": normalize_time(pick(row, ["首次封板时间"], "")),
-            "open_times": as_int(pick(row, ["炸板次数"], 0)),
-            "concept": as_text(pick(row, ["所属概念", "概念"], "")),
-            "industry": as_text(pick(row, ["所属行业", "行业"], "")),
-            "reason": as_text(pick(row, ["炸板原因", "原因", "涨停原因"], "")),
-            **limit_stats_parts(pick(row, ["涨停统计"], "")),
-        })
+    for row in frame_records(raw):
+        stats = limit_stats_parts(pick(row, ["涨停统计"], ""))
+        rows.append(
+            {
+                "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
+                "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
+                "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
+                "latest_price": as_float(pick(row, ["最新价"], 0)),
+                "limit_price": as_float(pick(row, ["涨停价"], 0)),
+                "turnover_amount": as_number(pick(row, ["成交额"], 0)),
+                "float_market_cap": as_number(pick(row, ["流通市值"], 0)),
+                "total_market_cap": as_number(pick(row, ["总市值"], 0)),
+                "turnover_rate": as_float(pick(row, ["换手率"], 0)),
+                "speed": as_float(pick(row, ["涨速"], 0)),
+                "amplitude": as_float(pick(row, ["振幅"], 0)),
+                "first_limit_time": normalize_time(pick(row, ["首次封板时间"], "")),
+                "open_times": as_int(pick(row, ["炸板次数"], 0)),
+                "concept": as_text(pick(row, ["所属概念", "概念"], "")),
+                "industry": as_text(pick(row, ["所属行业", "行业"], "")),
+                "reason": as_text(pick(row, ["炸板原因", "原因", "涨停原因"], "")),
+                **stats,
+            }
+        )
     return [row for row in rows if row["code"] and row["name"]]
 
 
 def fetch_limit_downs(trade_date):
+    raw = call_akshare("stock_zt_pool_dtgc_em", date=trade_date)
     rows = []
-    for row in frame_records(call_akshare("stock_zt_pool_dtgc_em", date=trade_date)):
-        rows.append({
-            "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
-            "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
-            "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
-            "latest_price": as_float(pick(row, ["最新价"], 0)),
-            "turnover_amount": as_number(pick(row, ["成交额"], 0)),
-            "float_market_cap": as_number(pick(row, ["流通市值"], 0)),
-            "total_market_cap": as_number(pick(row, ["总市值"], 0)),
-            "pe_dynamic": as_float(pick(row, ["动态市盈率"], 0)),
-            "turnover_rate": as_float(pick(row, ["换手率"], 0)),
-            "seal_amount": as_number(pick(row, ["封单资金"], 0)),
-            "last_limit_time": normalize_time(pick(row, ["最后封板时间"], "")),
-            "board_turnover_amount": as_number(pick(row, ["板上成交额"], 0)),
-            "consecutive_days": as_int(pick(row, ["连续跌停"], 0)),
-            "open_times": as_int(pick(row, ["开板次数"], 0)),
-            "industry": as_text(pick(row, ["所属行业", "行业"], "")),
-        })
+    for row in frame_records(raw):
+        rows.append(
+            {
+                "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
+                "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
+                "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
+                "latest_price": as_float(pick(row, ["最新价"], 0)),
+                "turnover_amount": as_number(pick(row, ["成交额"], 0)),
+                "float_market_cap": as_number(pick(row, ["流通市值"], 0)),
+                "total_market_cap": as_number(pick(row, ["总市值"], 0)),
+                "pe_dynamic": as_float(pick(row, ["动态市盈率"], 0)),
+                "turnover_rate": as_float(pick(row, ["换手率"], 0)),
+                "seal_amount": as_number(pick(row, ["封单资金"], 0)),
+                "last_limit_time": normalize_time(pick(row, ["最后封板时间"], "")),
+                "board_turnover_amount": as_number(pick(row, ["板上成交额"], 0)),
+                "consecutive_days": as_int(pick(row, ["连续跌停"], 0)),
+                "open_times": as_int(pick(row, ["开板次数"], 0)),
+                "industry": as_text(pick(row, ["所属行业", "行业"], "")),
+            }
+        )
     return [row for row in rows if row["code"] and row["name"]]
 
 
 def fetch_strong_stocks(trade_date):
+    raw = call_akshare("stock_zt_pool_strong_em", date=trade_date)
     rows = []
-    for row in frame_records(call_akshare("stock_zt_pool_strong_em", date=trade_date)):
-        rows.append({
-            "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
-            "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
-            "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
-            "latest_price": as_float(pick(row, ["最新价"], 0)),
-            "limit_price": as_float(pick(row, ["涨停价"], 0)),
-            "turnover_amount": as_number(pick(row, ["成交额"], 0)),
-            "turnover_rate": as_float(pick(row, ["换手率"], 0)),
-            "speed": as_float(pick(row, ["涨速"], 0)),
-            "is_new_high": as_text(pick(row, ["是否新高"], "")),
-            "volume_ratio": as_float(pick(row, ["量比"], 0)),
-            "selected_reason": as_text(pick(row, ["入选理由"], "")),
-            "industry": as_text(pick(row, ["所属行业", "行业"], "")),
-            **limit_stats_parts(pick(row, ["涨停统计"], "")),
-        })
+    for row in frame_records(raw):
+        stats = limit_stats_parts(pick(row, ["涨停统计"], ""))
+        rows.append(
+            {
+                "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
+                "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
+                "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
+                "latest_price": as_float(pick(row, ["最新价"], 0)),
+                "limit_price": as_float(pick(row, ["涨停价"], 0)),
+                "turnover_amount": as_number(pick(row, ["成交额"], 0)),
+                "turnover_rate": as_float(pick(row, ["换手率"], 0)),
+                "speed": as_float(pick(row, ["涨速"], 0)),
+                "is_new_high": as_text(pick(row, ["是否新高"], "")),
+                "volume_ratio": as_float(pick(row, ["量比"], 0)),
+                "selected_reason": as_text(pick(row, ["入选理由"], "")),
+                "industry": as_text(pick(row, ["所属行业", "行业"], "")),
+                **stats,
+            }
+        )
     return [row for row in rows if row["code"] and row["name"]]
 
 
 def fetch_sub_new_stocks(trade_date):
+    raw = call_akshare("stock_zt_pool_sub_new_em", date=trade_date)
     rows = []
-    for row in frame_records(call_akshare("stock_zt_pool_sub_new_em", date=trade_date)):
-        rows.append({
-            "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
-            "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
-            "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
-            "latest_price": as_float(pick(row, ["最新价"], 0)),
-            "limit_price": as_float(pick(row, ["涨停价"], 0)),
-            "turnover_amount": as_number(pick(row, ["成交额"], 0)),
-            "turnover_rate": as_float(pick(row, ["换手率", "转手率"], 0)),
-            "open_days": as_int(pick(row, ["开板几日"], 0)),
-            "open_date": normalize_date(pick(row, ["开板日期"], "")),
-            "listing_date": normalize_date(pick(row, ["上市日期"], "")),
-            "is_new_high": as_text(pick(row, ["是否新高"], "")),
-            "industry": as_text(pick(row, ["所属行业", "行业"], "")),
-            **limit_stats_parts(pick(row, ["涨停统计"], "")),
-        })
+    for row in frame_records(raw):
+        stats = limit_stats_parts(pick(row, ["涨停统计"], ""))
+        rows.append(
+            {
+                "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
+                "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
+                "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
+                "latest_price": as_float(pick(row, ["最新价"], 0)),
+                "limit_price": as_float(pick(row, ["涨停价"], 0)),
+                "turnover_amount": as_number(pick(row, ["成交额"], 0)),
+                "turnover_rate": as_float(pick(row, ["换手率", "转手率"], 0)),
+                "open_days": as_int(pick(row, ["开板几日"], 0)),
+                "open_date": normalize_date(pick(row, ["开板日期"], "")),
+                "listing_date": normalize_date(pick(row, ["上市日期"], "")),
+                "is_new_high": as_text(pick(row, ["是否新高"], "")),
+                "industry": as_text(pick(row, ["所属行业", "行业"], "")),
+                **stats,
+            }
+        )
     return [row for row in rows if row["code"] and row["name"]]
 
 
@@ -263,12 +310,14 @@ def load_history():
             continue
         trade_date = payload.get("meta", {}).get("trade_date") or path.stem
         for stock in payload.get("limit_ups", []):
-            records.append({
-                "trade_date": trade_date,
-                "code": stock.get("code"),
-                "name": stock.get("name"),
-                "consecutive_days": as_int(stock.get("consecutive_days"), 1),
-            })
+            records.append(
+                {
+                    "trade_date": trade_date,
+                    "code": stock.get("code"),
+                    "name": stock.get("name"),
+                    "consecutive_days": as_int(stock.get("consecutive_days"), 1),
+                }
+            )
     return records
 
 
@@ -279,15 +328,17 @@ def fetch_history_records(trade_date, lookback_days):
         day = target_date - timedelta(days=offset)
         if day.weekday() >= 5:
             continue
-        daily = fetch_limit_ups(day.strftime("%Y%m%d"))
         day_text = day.strftime("%Y-%m-%d")
+        daily = fetch_limit_ups(day.strftime("%Y%m%d"))
         for stock in daily:
-            records.append({
-                "trade_date": day_text,
-                "code": stock["code"],
-                "name": stock["name"],
-                "consecutive_days": as_int(stock.get("consecutive_days"), 1),
-            })
+            records.append(
+                {
+                    "trade_date": day_text,
+                    "code": stock["code"],
+                    "name": stock["name"],
+                    "consecutive_days": as_int(stock.get("consecutive_days"), 1),
+                }
+            )
         if daily:
             time.sleep(0.05)
     return records
@@ -303,45 +354,97 @@ def merge_history_records(*groups):
     return list(merged.values())
 
 
-def build_stats(limit_ups, trade_date, lookback_days=DEFAULT_STATS_LOOKBACK_DAYS):
-    history = merge_history_records(load_history(), fetch_history_records(trade_date, lookback_days))
+def build_history_snapshot(trade_date, lookback_days=DEFAULT_STATS_LOOKBACK_DAYS):
+    return merge_history_records(load_history(), fetch_history_records(trade_date, lookback_days))
+
+
+def previous_limit_session(history, trade_date):
+    previous_dates = sorted({item["trade_date"] for item in history if item.get("trade_date") < trade_date})
+    if not previous_dates:
+        return "", []
+    previous_date = previous_dates[-1]
+    return previous_date, [item for item in history if item.get("trade_date") == previous_date]
+
+
+def promotion_summary(limit_ups, history, trade_date):
+    previous_date, previous_rows = previous_limit_session(history, trade_date)
+    previous_codes = {item["code"] for item in previous_rows}
+    promoted = [
+        stock
+        for stock in limit_ups
+        if stock.get("code") in previous_codes and as_int(stock.get("consecutive_days"), 1) >= 2
+    ]
+    base_count = len(previous_codes)
+    return {
+        "previous_trade_date": previous_date,
+        "yesterday_limit_up_count": base_count,
+        "promoted_count": len(promoted),
+        "promotion_rate": round((len(promoted) / base_count) * 100, 2) if base_count else 0,
+        "promoted_stocks": [
+            {
+                "code": stock["code"],
+                "name": stock["name"],
+                "consecutive_days": as_int(stock.get("consecutive_days"), 1),
+            }
+            for stock in promoted
+        ],
+    }
+
+
+def build_stats(limit_ups, trade_date, history):
     existing_keys = {(item["trade_date"], item["code"]) for item in history}
     for stock in limit_ups:
         key = (trade_date, stock["code"])
         if key not in existing_keys:
-            history.append({
-                "trade_date": trade_date,
-                "code": stock["code"],
-                "name": stock["name"],
-                "consecutive_days": as_int(stock.get("consecutive_days"), 1),
-            })
+            history.append(
+                {
+                    "trade_date": trade_date,
+                    "code": stock["code"],
+                    "name": stock["name"],
+                    "consecutive_days": as_int(stock.get("consecutive_days"), 1),
+                }
+            )
+
     target_date = datetime.strptime(trade_date, "%Y-%m-%d").date()
     latest_names = {stock["code"]: stock["name"] for stock in limit_ups}
     stats = []
     for code in sorted({item["code"] for item in history} | set(latest_names)):
         rows = [item for item in history if item["code"] == code]
+        dates = [datetime.strptime(item["trade_date"], "%Y-%m-%d").date() for item in rows]
         if not rows:
             continue
-        dates = [datetime.strptime(item["trade_date"], "%Y-%m-%d").date() for item in rows]
         last_row = max(rows, key=lambda item: item["trade_date"])
-        stats.append({
-            "code": code,
-            "name": latest_names.get(code) or last_row.get("name") or "",
-            "limit_count_7d": sum(day >= target_date - timedelta(days=7) for day in dates),
-            "limit_count_30d": sum(day >= target_date - timedelta(days=30) for day in dates),
-            "limit_count_1y": sum(day >= target_date - timedelta(days=365) for day in dates),
-            "total_limit_count": len(rows),
-            "max_consecutive_days": max([as_int(item.get("consecutive_days"), 1) for item in rows] or [1]),
-            "last_limit_date": max([item["trade_date"] for item in rows], default=trade_date),
-            "is_limit_today": code in latest_names,
-        })
+        stats.append(
+            {
+                "code": code,
+                "name": latest_names.get(code) or last_row.get("name") or "",
+                "limit_count_7d": sum(day >= target_date - timedelta(days=7) for day in dates),
+                "limit_count_30d": sum(day >= target_date - timedelta(days=30) for day in dates),
+                "limit_count_1y": sum(day >= target_date - timedelta(days=365) for day in dates),
+                "total_limit_count": len(rows),
+                "max_consecutive_days": max([as_int(item.get("consecutive_days"), 1) for item in rows] or [1]),
+                "last_limit_date": max([item["trade_date"] for item in rows], default=trade_date),
+                "is_limit_today": code in latest_names,
+            }
+        )
     return sorted(stats, key=lambda item: (item["limit_count_30d"], item["limit_count_1y"]), reverse=True)
 
 
-def build_payload(trade_date_arg=None, stats_lookback_days=DEFAULT_STATS_LOOKBACK_DAYS):
+def build_payload(trade_date_arg=None, stats_lookback_days=DEFAULT_STATS_LOOKBACK_DAYS, allow_intraday=False):
     now = datetime.now(SHANGHAI)
-    trade_date = trade_date_arg or now.strftime("%Y-%m-%d")
+    completed_trade_date = latest_completed_trade_date(now)
+    if trade_date_arg:
+        target_date = datetime.strptime(trade_date_arg, "%Y-%m-%d").date()
+        if not allow_intraday and target_date > completed_trade_date:
+            raise ValueError(
+                f"{trade_date_arg} has not reached the 15:30 close update window. "
+                f"Use --allow-intraday only for manual testing."
+            )
+        trade_date = trade_date_arg
+    else:
+        trade_date = completed_trade_date.strftime("%Y-%m-%d")
     ak_date = trade_date.replace("-", "")
+
     limit_ups = fetch_limit_ups(ak_date)
     broken_limits = fetch_broken_limits(ak_date)
     limit_downs = fetch_limit_downs(ak_date)
@@ -350,12 +453,22 @@ def build_payload(trade_date_arg=None, stats_lookback_days=DEFAULT_STATS_LOOKBAC
     highest_board = max([as_int(item.get("consecutive_days"), 1) for item in limit_ups] or [0])
     broken_count = len(broken_limits)
     total_for_rate = len(limit_ups) + broken_count
-    stats = build_stats(limit_ups, trade_date, stats_lookback_days) if limit_ups else []
+    history = build_history_snapshot(trade_date, stats_lookback_days) if limit_ups else []
+    stats = build_stats(limit_ups, trade_date, history) if limit_ups else []
+    promotion = promotion_summary(limit_ups, history, trade_date) if limit_ups else {
+        "previous_trade_date": "",
+        "yesterday_limit_up_count": 0,
+        "promoted_count": 0,
+        "promotion_rate": 0,
+        "promoted_stocks": [],
+    }
+
     return {
         "meta": {
             "site_name": "峰股top",
             "trade_date": trade_date,
             "updated_at": now.strftime("%Y-%m-%d %H:%M"),
+            "market_data_ready_time": "15:30",
             "source": "akshare",
             "data_status": "ok" if limit_ups else "empty_or_failed",
             "stats_lookback_days": stats_lookback_days,
@@ -369,9 +482,12 @@ def build_payload(trade_date_arg=None, stats_lookback_days=DEFAULT_STATS_LOOKBAC
             "limit_down_count": len(limit_downs),
             "broken_limit_count": broken_count,
             "highest_board": highest_board,
+            "first_board_count": sum(as_int(item.get("consecutive_days"), 1) == 1 for item in limit_ups),
+            "multi_board_count": sum(as_int(item.get("consecutive_days"), 1) >= 2 for item in limit_ups),
             "limit_up_turnover_amount": sum(as_number(item.get("turnover_amount"), 0) for item in limit_ups),
             "limit_up_seal_amount": sum(as_number(item.get("seal_amount"), 0) for item in limit_ups),
             "broken_rate": round((broken_count / total_for_rate) * 100, 2) if total_for_rate else 0,
+            **promotion,
         },
         "limit_ups": limit_ups,
         "broken_limits": broken_limits,
@@ -396,9 +512,20 @@ def write_payload(payload):
 def main():
     parser = argparse.ArgumentParser(description="Update Fenggu Top market data.")
     parser.add_argument("--date", help="Trade date, for example 2026-07-06")
-    parser.add_argument("--stats-lookback-days", type=int, default=DEFAULT_STATS_LOOKBACK_DAYS)
+    parser.add_argument(
+        "--stats-lookback-days",
+        type=int,
+        default=DEFAULT_STATS_LOOKBACK_DAYS,
+        help="Calendar days used to backfill stock limit-up statistics.",
+    )
+    parser.add_argument(
+        "--allow-intraday",
+        action="store_true",
+        help="Allow updating a not-yet-closed trade date. Use only for manual checks.",
+    )
     args = parser.parse_args()
-    payload = build_payload(args.date, args.stats_lookback_days)
+
+    payload = build_payload(args.date, args.stats_lookback_days, args.allow_intraday)
     latest_path, history_path = write_payload(payload)
     print(f"wrote {latest_path}")
     print(f"wrote {history_path}")
