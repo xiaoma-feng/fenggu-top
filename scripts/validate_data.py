@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, time as datetime_time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -71,11 +72,30 @@ def main():
         fail(f"limit-up count {len(limit_ups)} is below {MIN_LIMIT_UP_COUNT}")
     if int(sentiment.get("limit_up_count") or 0) != len(limit_ups):
         fail("sentiment.limit_up_count does not match limit_ups length")
+    if int(sentiment.get("broken_limit_count") or 0) != len(payload.get("broken_limits") or []):
+        fail("sentiment.broken_limit_count does not match broken_limits length")
+    if int(sentiment.get("limit_down_count") or 0) != len(payload.get("limit_downs") or []):
+        fail("sentiment.limit_down_count does not match limit_downs length")
 
     first_stock = limit_ups[0]
     missing = [field for field in REQUIRED_LIMIT_UP_FIELDS if field not in first_stock]
     if missing:
         fail(f"first limit-up record is missing fields: {', '.join(missing)}")
+
+    codes = [str(item.get("code") or "") for item in limit_ups]
+    invalid_codes = [code for code in codes if not re.fullmatch(r"\d{6}", code)]
+    if invalid_codes:
+        fail(f"invalid stock codes: {', '.join(invalid_codes[:5])}")
+    if len(codes) != len(set(codes)):
+        fail("duplicate stock codes in limit_ups")
+
+    missing_names = [item.get("code") for item in limit_ups if not item.get("name")]
+    if missing_names:
+        fail(f"limit-up records with missing names: {', '.join(missing_names[:5])}")
+
+    highest_board = max(int(item.get("consecutive_days") or 1) for item in limit_ups)
+    if int(sentiment.get("highest_board") or 0) != highest_board:
+        fail("sentiment.highest_board does not match limit_ups")
 
     required_sections = ["broken_limits", "limit_downs", "strong_stocks", "sub_new_stocks", "stats"]
     empty_sections = [name for name in required_sections if not payload.get(name)]
