@@ -32,6 +32,7 @@ createApp({
     const query = ref("");
     const statQuery = ref("");
     const boardFilter = ref("all");
+    const sortKey = ref("first_limit_time");
     const activeSection = ref("overview");
     const navItems = [
       { key: "overview", label: "首页概览", target: "overview-section" },
@@ -113,6 +114,19 @@ createApp({
           normalizeText(stock.name).includes(term);
         return matchesBoard && matchesQuery;
       });
+    });
+
+    const sortedLimitUps = computed(() => {
+      const rows = [...filteredLimitUps.value];
+      const sorters = {
+        first_limit_time: (a, b) => String(a.first_limit_time || "99:99:99").localeCompare(String(b.first_limit_time || "99:99:99")),
+        consecutive_days: (a, b) => numberValue(b.consecutive_days, 1) - numberValue(a.consecutive_days, 1),
+        seal_amount: (a, b) => numberValue(b.seal_amount) - numberValue(a.seal_amount),
+        turnover_amount: (a, b) => numberValue(b.turnover_amount) - numberValue(a.turnover_amount),
+        turnover_rate: (a, b) => numberValue(b.turnover_rate) - numberValue(a.turnover_rate),
+        open_times: (a, b) => numberValue(b.open_times) - numberValue(a.open_times),
+      };
+      return rows.sort(sorters[sortKey.value] || sorters.first_limit_time);
     });
 
     const boardDistribution = computed(() => {
@@ -219,6 +233,46 @@ createApp({
       return stock.reason || stock.concept || stock.industry || stock.limit_stats || "--";
     }
 
+    function clearFilters() {
+      query.value = "";
+      boardFilter.value = "all";
+      sortKey.value = "first_limit_time";
+    }
+
+    function csvCell(value) {
+      const text = String(value ?? "").replaceAll('"', '""');
+      return `"${text}"`;
+    }
+
+    function exportLimitUps() {
+      const headers = ["代码", "名称", "涨幅", "最新价", "首次封板", "最后封板", "行业/原因", "成交额", "换手率", "封单金额", "连板", "炸板", "涨停统计"];
+      const rows = sortedLimitUps.value.map((stock) => [
+        stock.code,
+        stock.name,
+        formatPercent(stock.change_pct),
+        stock.latest_price || "",
+        stock.first_limit_time || "",
+        stock.last_limit_time || "",
+        formatReason(stock),
+        formatMoney(stock.turnover_amount),
+        formatPercent(stock.turnover_rate),
+        formatMoney(stock.seal_amount),
+        stock.consecutive_days || 1,
+        stock.open_times ?? 0,
+        stock.limit_stats || "",
+      ]);
+      const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+      const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `峰股top-涨停汇总-${data.value.meta.trade_date || "latest"}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
     function scrollToSection(item) {
       activeSection.value = item.key;
       const target = document.getElementById(item.target);
@@ -233,11 +287,13 @@ createApp({
       query,
       statQuery,
       boardFilter,
+      sortKey,
       activeSection,
       navItems,
       metricCards,
       totalLimitUps,
       filteredLimitUps,
+      sortedLimitUps,
       boardDistribution,
       selectedStock,
       brokenWatch,
@@ -252,6 +308,8 @@ createApp({
       formatMoney,
       formatPercent,
       formatReason,
+      clearFilters,
+      exportLimitUps,
       scrollToSection,
     };
   },
