@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "峰股top",
     "trade_date": "2026-07-06",
-    "updated_at": "2026-07-07 13:36",
+    "updated_at": "2026-07-07 13:45",
     "market_data_ready_time": "15:30",
     "source": "akshare",
     "data_status": "ok",
@@ -108,27 +108,6 @@
       "limit_stats": "5/4"
     },
     {
-      "code": "002607",
-      "name": "中公教育",
-      "change_pct": 10.0,
-      "latest_price": 2.09,
-      "turnover_amount": 188785817,
-      "float_market_cap": 11585790043.08,
-      "total_market_cap": 12889864796.16,
-      "turnover_rate": 1.6294599771499634,
-      "first_limit_time": "09:25:00",
-      "last_limit_time": "09:25:00",
-      "concept": "",
-      "industry": "教育",
-      "seal_amount": 291794723,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 4,
-      "limit_days_window": 2,
-      "limit_stats": "4/2"
-    },
-    {
       "code": "002042",
       "name": "华孚时尚",
       "change_pct": 9.97150993347168,
@@ -148,6 +127,27 @@
       "limit_days_in_window": 1,
       "limit_days_window": 1,
       "limit_stats": "1/1"
+    },
+    {
+      "code": "002607",
+      "name": "中公教育",
+      "change_pct": 10.0,
+      "latest_price": 2.09,
+      "turnover_amount": 188785817,
+      "float_market_cap": 11585790043.08,
+      "total_market_cap": 12889864796.16,
+      "turnover_rate": 1.6294599771499634,
+      "first_limit_time": "09:25:00",
+      "last_limit_time": "09:25:00",
+      "concept": "",
+      "industry": "教育",
+      "seal_amount": 291794723,
+      "consecutive_days": 1,
+      "open_times": 0,
+      "reason": "",
+      "limit_days_in_window": 4,
+      "limit_days_window": 2,
+      "limit_stats": "4/2"
     },
     {
       "code": "603137",
@@ -3331,23 +3331,6 @@
       "limit_stats": "0/0"
     },
     {
-      "code": "000656",
-      "name": "金科股份",
-      "change_pct": 10.0,
-      "latest_price": 1.43,
-      "limit_price": 1.43,
-      "turnover_amount": 751158880,
-      "turnover_rate": 6.929233551025391,
-      "speed": 0.0,
-      "is_new_high": "否",
-      "volume_ratio": 5.09738826751709,
-      "selected_reason": "近期多次涨停",
-      "industry": "房地产开",
-      "limit_days_in_window": 3,
-      "limit_days_window": 3,
-      "limit_stats": "3/3"
-    },
-    {
       "code": "002396",
       "name": "星网锐捷",
       "change_pct": 10.0,
@@ -3363,23 +3346,6 @@
       "limit_days_in_window": 5,
       "limit_days_window": 4,
       "limit_stats": "5/4"
-    },
-    {
-      "code": "002025",
-      "name": "航天电器",
-      "change_pct": 10.0,
-      "latest_price": 92.07,
-      "limit_price": 92.07,
-      "turnover_amount": 2522432144,
-      "turnover_rate": 6.350342273712158,
-      "speed": 0.0,
-      "is_new_high": "是",
-      "volume_ratio": 0.8561655879020691,
-      "selected_reason": "60日新高",
-      "industry": "军工电子",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1"
     },
     {
       "code": "002607",
@@ -3399,6 +3365,23 @@
       "limit_stats": "4/2"
     },
     {
+      "code": "000656",
+      "name": "金科股份",
+      "change_pct": 10.0,
+      "latest_price": 1.43,
+      "limit_price": 1.43,
+      "turnover_amount": 751158880,
+      "turnover_rate": 6.929233551025391,
+      "speed": 0.0,
+      "is_new_high": "否",
+      "volume_ratio": 5.09738826751709,
+      "selected_reason": "近期多次涨停",
+      "industry": "房地产开",
+      "limit_days_in_window": 3,
+      "limit_days_window": 3,
+      "limit_stats": "3/3"
+    },
+    {
       "code": "603722",
       "name": "阿科力",
       "change_pct": 10.0,
@@ -3414,6 +3397,23 @@
       "limit_days_in_window": 2,
       "limit_days_window": 2,
       "limit_stats": "2/2"
+    },
+    {
+      "code": "002025",
+      "name": "航天电器",
+      "change_pct": 10.0,
+      "latest_price": 92.07,
+      "limit_price": 92.07,
+      "turnover_amount": 2522432144,
+      "turnover_rate": 6.350342273712158,
+      "speed": 0.0,
+      "is_new_high": "是",
+      "volume_ratio": 0.8561655879020691,
+      "selected_reason": "60日新高",
+      "industry": "军工电子",
+      "limit_days_in_window": 1,
+      "limit_days_window": 1,
+      "limit_stats": "1/1"
     },
     {
       "code": "600793",
@@ -4776,23 +4776,6 @@
       "limit_stats": "0/0"
     },
     {
-      "code": "002868",
-      "name": "绿康生化",
-      "change_pct": 0.0,
-      "latest_price": 26.28,
-      "limit_price": 28.91,
-      "turnover_amount": 155170134,
-      "turnover_rate": 5.503100395202637,
-      "speed": 0.0,
-      "is_new_high": "否",
-      "volume_ratio": 1.8948274850845337,
-      "selected_reason": "近期多次涨停",
-      "industry": "动物保健",
-      "limit_days_in_window": 4,
-      "limit_days_window": 2,
-      "limit_stats": "4/2"
-    },
-    {
       "code": "002808",
       "name": "恒久退",
       "change_pct": 0.0,
@@ -4808,6 +4791,23 @@
       "limit_days_in_window": 5,
       "limit_days_window": 3,
       "limit_stats": "5/3"
+    },
+    {
+      "code": "002868",
+      "name": "绿康生化",
+      "change_pct": 0.0,
+      "latest_price": 26.28,
+      "limit_price": 28.91,
+      "turnover_amount": 155170134,
+      "turnover_rate": 5.503100395202637,
+      "speed": 0.0,
+      "is_new_high": "否",
+      "volume_ratio": 1.8948274850845337,
+      "selected_reason": "近期多次涨停",
+      "industry": "动物保健",
+      "limit_days_in_window": 4,
+      "limit_days_window": 2,
+      "limit_stats": "4/2"
     },
     {
       "code": "300873",
