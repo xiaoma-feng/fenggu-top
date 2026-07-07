@@ -49,15 +49,28 @@
             </button>
           </div>
 
-          <label class="search">
-            <span>搜索</span>
-            <input v-model.trim="query" type="search" placeholder="搜索股票代码 / 名称" />
-          </label>
+          <div class="top-tools">
+            <label class="date-picker">
+              <span>日期</span>
+              <select v-model="selectedDate" @change="loadDate(selectedDate)">
+                <option v-for="date in availableDates" :key="date" :value="date">{{ date }}</option>
+              </select>
+            </label>
+            <label class="search">
+              <span>搜索</span>
+              <input v-model.trim="query" type="search" placeholder="搜索股票代码 / 名称" />
+            </label>
+          </div>
         </header>
 
         <section v-if="loadError" class="notice">
           <strong>数据暂时不可用</strong>
           <span>{{ loadError }}</span>
+        </section>
+
+        <section class="notice scope-notice">
+          <strong>数据口径</strong>
+          <span>{{ dataScopeText }}</span>
         </section>
 
         <section id="overview-section" class="metric-grid" aria-label="市场情绪概览">
@@ -74,7 +87,7 @@
         <section class="content-grid">
           <article id="limitups-section" class="panel table-panel">
             <div class="panel-head">
-              <h2>今日涨停股票汇总</h2>
+              <h2>收盘涨停股票汇总</h2>
               <div class="table-actions">
                 <select v-model="boardFilter" aria-label="连板筛选">
                   <option value="all">全部</option>
