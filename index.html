@@ -19,13 +19,14 @@
         </div>
 
         <nav class="side-nav" aria-label="主导航">
-          <button class="active">首页概览</button>
-          <button>今日涨停</button>
-          <button>个股统计</button>
-          <button>连板统计</button>
-          <button>历史数据</button>
-          <button>排行榜</button>
-          <button>数据中心</button>
+          <button
+            v-for="item in navItems"
+            :key="item.key"
+            :class="{ active: activeSection === item.key }"
+            @click="scrollToSection(item)"
+          >
+            {{ item.label }}
+          </button>
         </nav>
 
         <div class="source-note">
@@ -38,11 +39,14 @@
       <main class="shell">
         <header class="topbar">
           <div class="tabs">
-            <button class="active">首页</button>
-            <button>涨停汇总</button>
-            <button>个股统计</button>
-            <button>连板统计</button>
-            <button>排行榜</button>
+            <button
+              v-for="item in navItems.slice(0, 5)"
+              :key="item.key"
+              :class="{ active: activeSection === item.key }"
+              @click="scrollToSection(item)"
+            >
+              {{ item.label }}
+            </button>
           </div>
 
           <label class="search">
@@ -56,7 +60,7 @@
           <span>{{ loadError }}</span>
         </section>
 
-        <section class="metric-grid" aria-label="市场情绪概览">
+        <section id="overview-section" class="metric-grid" aria-label="市场情绪概览">
           <article v-for="card in metricCards" :key="card.label" class="metric-card">
             <span class="metric-label">{{ card.label }}</span>
             <div class="metric-value">
@@ -68,7 +72,7 @@
         </section>
 
         <section class="content-grid">
-          <article class="panel table-panel">
+          <article id="limitups-section" class="panel table-panel">
             <div class="panel-head">
               <h2>今日涨停股票汇总</h2>
               <select v-model="boardFilter" aria-label="连板筛选">
@@ -124,7 +128,7 @@
             </div>
           </article>
 
-          <article class="panel">
+          <article id="boards-section" class="panel">
             <div class="panel-head">
               <h2>连板分布</h2>
               <span>{{ totalLimitUps }} 只</span>
@@ -140,7 +144,7 @@
             </div>
           </article>
 
-          <article class="panel stock-panel">
+          <article id="stats-section" class="panel stock-panel">
             <div class="panel-head">
               <h2>个股涨停统计</h2>
               <input v-model.trim="statQuery" placeholder="输入股票代码或名称" />
@@ -177,7 +181,7 @@
             </div>
           </article>
 
-          <aside class="right-rail">
+          <aside id="rankings-section" class="right-rail">
             <article class="panel">
               <div class="panel-head">
                 <h2>最高连板排行</h2>
@@ -188,6 +192,20 @@
                   <strong>{{ stock.consecutive_days }}板</strong>
                 </li>
               </ol>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <h2>昨日涨停晋级</h2>
+                <span>{{ data.sentiment.promoted_count || 0 }} / {{ data.sentiment.yesterday_limit_up_count || 0 }}</span>
+              </div>
+              <ol class="rank-list">
+                <li v-for="stock in promotedStocks.slice(0, 6)" :key="stock.code">
+                  <span>{{ stock.name }}</span>
+                  <strong>{{ stock.consecutive_days }}板</strong>
+                </li>
+              </ol>
+              <div v-if="!promotedStocks.length" class="empty block-empty">暂无晋级数据</div>
             </article>
 
             <article class="panel heat-panel">
@@ -224,6 +242,21 @@
                   <strong>{{ formatPercent(stock.change_pct) }}</strong>
                 </li>
               </ol>
+            </article>
+
+            <article id="data-section" class="panel">
+              <div class="panel-head">
+                <h2>数据完整性</h2>
+                <span>{{ data.meta.data_status === 'ok' ? '正常' : '异常' }}</span>
+              </div>
+              <div class="quality-list">
+                <div v-for="item in dataCompleteness" :key="item.label">
+                  <span :class="{ ok: item.ok }"></span>
+                  <strong>{{ item.label }}</strong>
+                  <em>{{ item.count }} 条</em>
+                </div>
+              </div>
+              <p class="data-note" v-for="note in data.meta.notes || []" :key="note">{{ note }}</p>
             </article>
           </aside>
         </section>
