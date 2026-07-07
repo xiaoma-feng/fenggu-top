@@ -5,6 +5,9 @@ const emptyData = {
   sentiment: {},
   limit_ups: [],
   broken_limits: [],
+  limit_downs: [],
+  strong_stocks: [],
+  sub_new_stocks: [],
   stats: [],
 };
 
@@ -29,6 +32,15 @@ createApp({
     const query = ref("");
     const statQuery = ref("");
     const boardFilter = ref("all");
+    const activeSection = ref("overview");
+    const navItems = [
+      { key: "overview", label: "首页概览", target: "overview-section" },
+      { key: "limitups", label: "今日涨停", target: "limitups-section" },
+      { key: "stats", label: "个股统计", target: "stats-section" },
+      { key: "boards", label: "连板统计", target: "boards-section" },
+      { key: "rankings", label: "排行榜", target: "rankings-section" },
+      { key: "data", label: "数据中心", target: "data-section" },
+    ];
 
     async function loadData() {
       if (window.location.protocol === "file:") {
@@ -54,6 +66,8 @@ createApp({
     const limitUps = computed(() => data.value.limit_ups || []);
     const brokenWatch = computed(() => data.value.broken_limits || []);
     const limitDowns = computed(() => data.value.limit_downs || []);
+    const strongStocks = computed(() => data.value.strong_stocks || []);
+    const subNewStocks = computed(() => data.value.sub_new_stocks || []);
     const allStats = computed(() => data.value.stats || []);
     const totalLimitUps = computed(() => numberValue(data.value.sentiment.limit_up_count, limitUps.value.length));
     const highestBoard = computed(() => Math.max(0, ...limitUps.value.map((item) => numberValue(item.consecutive_days, 1))));
@@ -67,13 +81,22 @@ createApp({
       { label: "今日涨停", value: totalLimitUps.value, unit: "只", caption: data.value.meta.trade_date || "收盘后自动更新" },
       {
         label: "连板股",
-        value: limitUps.value.filter((item) => numberValue(item.consecutive_days, 1) >= 2).length,
+        value: numberValue(
+          data.value.sentiment.multi_board_count,
+          limitUps.value.filter((item) => numberValue(item.consecutive_days, 1) >= 2).length,
+        ),
         unit: "只",
         caption: "2板及以上",
       },
       { label: "炸板股", value: numberValue(data.value.sentiment.broken_limit_count, brokenWatch.value.length), unit: "只", caption: "盘中打开涨停" },
       { label: "今日跌停", value: numberValue(data.value.sentiment.limit_down_count, limitDowns.value.length), unit: "只", caption: "跌停池同步统计" },
       { label: "炸板率", value: `${brokenRate.value}%`, unit: "", caption: "炸板 / 涨停炸板合计" },
+      {
+        label: "晋级率",
+        value: `${numberValue(data.value.sentiment.promotion_rate).toFixed(1)}%`,
+        unit: "",
+        caption: data.value.sentiment.previous_trade_date ? `基于 ${data.value.sentiment.previous_trade_date}` : "昨日涨停今日连板",
+      },
       { label: "市场最高板", value: highestBoard.value, unit: "板", caption: highestBoard.value >= 5 ? "高位活跃" : "情绪观察" },
     ]);
 
@@ -157,6 +180,17 @@ createApp({
         .slice(0, 6),
     );
 
+    const promotedStocks = computed(() => data.value.sentiment.promoted_stocks || []);
+
+    const dataCompleteness = computed(() => [
+      { label: "涨停池", count: limitUps.value.length, ok: limitUps.value.length > 0 },
+      { label: "炸板池", count: brokenWatch.value.length, ok: brokenWatch.value.length > 0 },
+      { label: "跌停池", count: limitDowns.value.length, ok: limitDowns.value.length > 0 },
+      { label: "强势股池", count: strongStocks.value.length, ok: strongStocks.value.length > 0 },
+      { label: "次新股池", count: subNewStocks.value.length, ok: subNewStocks.value.length > 0 },
+      { label: "历史统计", count: allStats.value.length, ok: allStats.value.length > 0 },
+    ]);
+
     const heatMap = computed(() => {
       const counts = new Map();
       for (const stock of limitUps.value) {
@@ -185,12 +219,22 @@ createApp({
       return stock.reason || stock.concept || stock.industry || stock.limit_stats || "--";
     }
 
+    function scrollToSection(item) {
+      activeSection.value = item.key;
+      const target = document.getElementById(item.target);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
     return {
       data,
       loadError,
       query,
       statQuery,
       boardFilter,
+      activeSection,
+      navItems,
       metricCards,
       totalLimitUps,
       filteredLimitUps,
@@ -198,12 +242,17 @@ createApp({
       selectedStock,
       brokenWatch,
       limitDowns,
+      strongStocks,
+      subNewStocks,
       highestBoardRank,
       thirtyDayRank,
+      promotedStocks,
+      dataCompleteness,
       heatMap,
       formatMoney,
       formatPercent,
       formatReason,
+      scrollToSection,
     };
   },
 }).mount("#app");
