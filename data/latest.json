@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "峰股top",
     "trade_date": "2026-07-07",
-    "updated_at": "2026-07-07 18:38",
+    "updated_at": "2026-07-07 19:55",
     "market_data_ready_time": "15:30",
     "source": "akshare",
     "data_status": "ok",
@@ -10,6 +10,10 @@
     "notes": [
       "涨停池、炸板池、跌停池来自 AKShare 东方财富专题接口。",
       "AKShare 当前涨停池不提供标准化涨停原因，页面优先展示行业和原始涨停统计。"
+    ],
+    "available_dates": [
+      "2026-07-07",
+      "2026-07-06"
     ]
   },
   "sentiment": {
