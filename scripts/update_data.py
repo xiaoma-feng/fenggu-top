@@ -503,6 +503,9 @@ def write_payload(payload):
     HISTORY_DIR.mkdir(exist_ok=True)
     latest_path = DATA_DIR / "latest.json"
     history_path = HISTORY_DIR / f"{payload['meta']['trade_date']}.json"
+    existing_dates = {path.stem for path in HISTORY_DIR.glob("*.json")}
+    existing_dates.add(payload["meta"]["trade_date"])
+    payload["meta"]["available_dates"] = sorted(existing_dates, reverse=True)
     text = json.dumps(payload, ensure_ascii=False, indent=2)
     latest_path.write_text(text + "\n", encoding="utf-8")
     history_path.write_text(text + "\n", encoding="utf-8")
