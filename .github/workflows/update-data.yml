@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "scripts/update_data.py"
+      - "scripts/*.py"
       - "requirements.txt"
       - ".github/workflows/update-data.yml"
   workflow_dispatch:
@@ -53,6 +53,9 @@ jobs:
             ARGS="$ARGS --stats-lookback-days ${{ github.event.inputs.stats_lookback_days }}"
           fi
           python scripts/update_data.py $ARGS
+
+      - name: Validate data
+        run: python scripts/validate_data.py
 
       - name: Commit data files
         uses: stefanzweifel/git-auto-commit-action@v5
