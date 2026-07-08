@@ -25,7 +25,9 @@ REQUIRED_LIMIT_UP_FIELDS = [
     "consecutive_days",
     "open_times",
     "limit_stats",
+    "market_board",
 ]
+VALID_MARKET_BOARDS = {"主板", "创业板", "科创板", "北交所"}
 
 
 def previous_business_day(day):
@@ -93,6 +95,10 @@ def main():
     if missing_names:
         fail(f"limit-up records with missing names: {', '.join(missing_names[:5])}")
 
+    invalid_boards = [item.get("code") for item in limit_ups if item.get("market_board") not in VALID_MARKET_BOARDS]
+    if invalid_boards:
+        fail(f"limit-up records with invalid market boards: {', '.join(invalid_boards[:5])}")
+
     highest_board = max(int(item.get("consecutive_days") or 1) for item in limit_ups)
     if int(sentiment.get("highest_board") or 0) != highest_board:
         fail("sentiment.highest_board does not match limit_ups")
@@ -101,6 +107,11 @@ def main():
     empty_sections = [name for name in required_sections if not payload.get(name)]
     if empty_sections:
         fail(f"empty required sections: {', '.join(empty_sections)}")
+
+    rankings = payload.get("rankings") or {}
+    for key in ["industry_limit_rank", "theme_limit_rank", "market_board_limit_rank"]:
+        if not rankings.get(key):
+            fail(f"rankings.{key} is empty")
 
     print(
         "data validation ok: "
