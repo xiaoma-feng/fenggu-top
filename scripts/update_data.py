@@ -18,6 +18,19 @@ HISTORY_DIR = DATA_DIR / "history"
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 DEFAULT_STATS_LOOKBACK_DAYS = 370
 MARKET_DATA_READY_TIME = datetime_time(15, 30)
+THEME_RULES = [
+    ("机器人", ["机器人", "减速器", "伺服", "工业母机", "智能制造"]),
+    ("PCB", ["PCB", "印制电路", "线路板", "覆铜板", "电子元件", "元件"]),
+    ("算力", ["算力", "服务器", "数据中心", "液冷", "光模块", "CPO"]),
+    ("创新药", ["创新药", "医药", "生物制品", "化学制药", "医疗"]),
+    ("军工", ["军工", "航天", "航空", "卫星", "国防"]),
+    ("半导体", ["半导体", "芯片", "集成电路", "封测"]),
+    ("AI硬件", ["AI", "人工智能", "消费电子", "计算机设", "光学光电"]),
+    ("消费电子", ["消费电子", "电子", "光学光电"]),
+    ("有色金属", ["有色", "稀土", "金属", "冶钢", "矿业"]),
+    ("固态电池", ["固态电池", "电池", "锂电", "新能源"]),
+    ("商业航天", ["商业航天", "卫星", "航天"]),
+]
 
 
 def clean_value(value):
@@ -102,6 +115,28 @@ def normalize_date(value):
     return text
 
 
+def infer_market_board(code):
+    text = as_text(code)
+    if text.startswith(("300", "301")):
+        return "创业板"
+    if text.startswith("688"):
+        return "科创板"
+    if text.startswith(("8", "4", "920")):
+        return "北交所"
+    return "主板"
+
+
+def infer_theme(row):
+    text = " ".join(
+        as_text(row.get(key))
+        for key in ["name", "concept", "industry", "reason", "selected_reason"]
+    )
+    for theme, keywords in THEME_RULES:
+        if any(keyword.lower() in text.lower() for keyword in keywords):
+            return theme
+    return "其他"
+
+
 def previous_business_day(day):
     current = day - timedelta(days=1)
     while current.weekday() >= 5:
@@ -172,8 +207,7 @@ def fetch_limit_ups(trade_date):
     rows = []
     for row in frame_records(raw):
         stats = limit_stats_parts(pick(row, ["涨停统计"], ""))
-        rows.append(
-            {
+        record = {
                 "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
                 "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
                 "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
@@ -192,7 +226,9 @@ def fetch_limit_ups(trade_date):
                 "reason": as_text(pick(row, ["涨停原因", "涨停原因类别", "原因"], "")),
                 **stats,
             }
-        )
+        record["market_board"] = infer_market_board(record["code"])
+        record["theme"] = infer_theme(record)
+        rows.append(record)
     return [row for row in rows if row["code"] and row["name"]]
 
 
@@ -201,8 +237,7 @@ def fetch_broken_limits(trade_date):
     rows = []
     for row in frame_records(raw):
         stats = limit_stats_parts(pick(row, ["涨停统计"], ""))
-        rows.append(
-            {
+        record = {
                 "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
                 "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
                 "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
@@ -221,7 +256,9 @@ def fetch_broken_limits(trade_date):
                 "reason": as_text(pick(row, ["炸板原因", "原因", "涨停原因"], "")),
                 **stats,
             }
-        )
+        record["market_board"] = infer_market_board(record["code"])
+        record["theme"] = infer_theme(record)
+        rows.append(record)
     return [row for row in rows if row["code"] and row["name"]]
 
 
@@ -229,8 +266,7 @@ def fetch_limit_downs(trade_date):
     raw = call_akshare("stock_zt_pool_dtgc_em", date=trade_date)
     rows = []
     for row in frame_records(raw):
-        rows.append(
-            {
+        record = {
                 "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
                 "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
                 "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
@@ -247,7 +283,9 @@ def fetch_limit_downs(trade_date):
                 "open_times": as_int(pick(row, ["开板次数"], 0)),
                 "industry": as_text(pick(row, ["所属行业", "行业"], "")),
             }
-        )
+        record["market_board"] = infer_market_board(record["code"])
+        record["theme"] = infer_theme(record)
+        rows.append(record)
     return [row for row in rows if row["code"] and row["name"]]
 
 
@@ -256,8 +294,7 @@ def fetch_strong_stocks(trade_date):
     rows = []
     for row in frame_records(raw):
         stats = limit_stats_parts(pick(row, ["涨停统计"], ""))
-        rows.append(
-            {
+        record = {
                 "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
                 "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
                 "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
@@ -272,7 +309,9 @@ def fetch_strong_stocks(trade_date):
                 "industry": as_text(pick(row, ["所属行业", "行业"], "")),
                 **stats,
             }
-        )
+        record["market_board"] = infer_market_board(record["code"])
+        record["theme"] = infer_theme(record)
+        rows.append(record)
     return [row for row in rows if row["code"] and row["name"]]
 
 
@@ -281,8 +320,7 @@ def fetch_sub_new_stocks(trade_date):
     rows = []
     for row in frame_records(raw):
         stats = limit_stats_parts(pick(row, ["涨停统计"], ""))
-        rows.append(
-            {
+        record = {
                 "code": as_text(pick(row, ["代码", "股票代码", "证券代码"])).zfill(6),
                 "name": as_text(pick(row, ["名称", "股票简称", "股票名称"])),
                 "change_pct": as_float(pick(row, ["涨跌幅"], 0)),
@@ -297,7 +335,9 @@ def fetch_sub_new_stocks(trade_date):
                 "industry": as_text(pick(row, ["所属行业", "行业"], "")),
                 **stats,
             }
-        )
+        record["market_board"] = infer_market_board(record["code"])
+        record["theme"] = infer_theme(record)
+        rows.append(record)
     return [row for row in rows if row["code"] and row["name"]]
 
 
@@ -407,6 +447,7 @@ def build_stats(limit_ups, trade_date, history):
 
     target_date = datetime.strptime(trade_date, "%Y-%m-%d").date()
     latest_names = {stock["code"]: stock["name"] for stock in limit_ups}
+    latest_meta = {stock["code"]: stock for stock in limit_ups}
     stats = []
     for code in sorted({item["code"] for item in history} | set(latest_names)):
         rows = [item for item in history if item["code"] == code]
@@ -414,20 +455,39 @@ def build_stats(limit_ups, trade_date, history):
         if not rows:
             continue
         last_row = max(rows, key=lambda item: item["trade_date"])
+        latest = latest_meta.get(code, {})
         stats.append(
             {
                 "code": code,
                 "name": latest_names.get(code) or last_row.get("name") or "",
+                "industry": latest.get("industry", ""),
+                "theme": latest.get("theme", ""),
+                "market_board": infer_market_board(code),
                 "limit_count_7d": sum(day >= target_date - timedelta(days=7) for day in dates),
                 "limit_count_30d": sum(day >= target_date - timedelta(days=30) for day in dates),
                 "limit_count_1y": sum(day >= target_date - timedelta(days=365) for day in dates),
+                "limit_count_ytd": sum(day.year == target_date.year for day in dates),
+                "limit_count_3y": sum(day >= target_date - timedelta(days=365 * 3) for day in dates),
                 "total_limit_count": len(rows),
                 "max_consecutive_days": max([as_int(item.get("consecutive_days"), 1) for item in rows] or [1]),
                 "last_limit_date": max([item["trade_date"] for item in rows], default=trade_date),
+                "first_limit_date": min([item["trade_date"] for item in rows], default=trade_date),
+                "broken_count_total": None,
                 "is_limit_today": code in latest_names,
             }
         )
     return sorted(stats, key=lambda item: (item["limit_count_30d"], item["limit_count_1y"]), reverse=True)
+
+
+def rank_by_field(rows, field, top_n=12):
+    counts = {}
+    for row in rows:
+        key = as_text(row.get(field)) or "其他"
+        counts[key] = counts.get(key, 0) + 1
+    return [
+        {"name": name, "count": count}
+        for name, count in sorted(counts.items(), key=lambda item: item[1], reverse=True)[:top_n]
+    ]
 
 
 def build_payload(trade_date_arg=None, stats_lookback_days=DEFAULT_STATS_LOOKBACK_DAYS, allow_intraday=False):
@@ -488,6 +548,11 @@ def build_payload(trade_date_arg=None, stats_lookback_days=DEFAULT_STATS_LOOKBAC
             "limit_up_seal_amount": sum(as_number(item.get("seal_amount"), 0) for item in limit_ups),
             "broken_rate": round((broken_count / total_for_rate) * 100, 2) if total_for_rate else 0,
             **promotion,
+        },
+        "rankings": {
+            "industry_limit_rank": rank_by_field(limit_ups, "industry"),
+            "theme_limit_rank": rank_by_field(limit_ups, "theme"),
+            "market_board_limit_rank": rank_by_field(limit_ups, "market_board"),
         },
         "limit_ups": limit_ups,
         "broken_limits": broken_limits,
