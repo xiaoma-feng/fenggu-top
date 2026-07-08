@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>峰股top 最新版</title>
+    <style>
+      html, body, iframe { width: 100%; height: 100%; margin: 0; border: 0; background: #070b15; }
+      .tip { position: fixed; right: 14px; bottom: 14px; z-index: 10; color: #91a0b8; font: 12px Microsoft YaHei, Arial; }
+    </style>
+  </head>
+  <body>
+    <iframe id="site" src="./index.html" title="峰股top"></iframe>
+    <div class="tip">最新版入口</div>
+    <script>
+      const frame = document.getElementById('site');
+      frame.addEventListener('load', () => {
+        const doc = frame.contentDocument;
+        if (!doc || doc.querySelector('[data-latest-injected]')) return;
+        const css = doc.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = './src/feedback-widget.css';
+        css.dataset.latestInjected = 'true';
+        doc.head.appendChild(css);
+        const js = doc.createElement('script');
+        js.src = './src/feedback-widget.js';
+        js.dataset.latestInjected = 'true';
+        doc.body.appendChild(js);
+      });
+    </script>
+  </body>
+</html>
