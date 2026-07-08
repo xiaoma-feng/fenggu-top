@@ -53,9 +53,12 @@
           <div class="top-tools">
             <label class="date-picker">
               <span>日期</span>
-              <select v-model="selectedDate" @change="loadDate(selectedDate)">
-                <option v-for="date in availableDates" :key="date" :value="date">{{ date }}</option>
-              </select>
+              <div class="date-select-wrap">
+                <select v-model="selectedDate" @change="loadDate(selectedDate)" aria-label="选择历史日期">
+                  <option v-for="date in availableDates" :key="date" :value="date">{{ date }}</option>
+                </select>
+              </div>
+              <em>近3个月</em>
             </label>
             <button type="button" class="refresh-toggle" @click="toggleRefresh">
               {{ refreshPaused ? '恢复刷新' : '暂停刷新' }}
