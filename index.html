@@ -33,6 +33,7 @@
           <span>数据源：AKShare / 东方财富专题</span>
           <span>交易日：{{ data.meta.trade_date || '--' }}</span>
           <span>更新时间：{{ data.meta.updated_at || '--' }}</span>
+          <span>状态：{{ realtimeStatus }}</span>
         </div>
       </aside>
 
@@ -40,7 +41,7 @@
         <header class="topbar">
           <div class="tabs">
             <button
-              v-for="item in navItems.slice(0, 5)"
+              v-for="item in navItems.slice(0, 6)"
               :key="item.key"
               :class="{ active: activeSection === item.key }"
               @click="scrollToSection(item)"
@@ -56,6 +57,9 @@
                 <option v-for="date in availableDates" :key="date" :value="date">{{ date }}</option>
               </select>
             </label>
+            <button type="button" class="refresh-toggle" @click="toggleRefresh">
+              {{ refreshPaused ? '恢复刷新' : '暂停刷新' }}
+            </button>
             <label class="search">
               <span>搜索</span>
               <input v-model.trim="query" type="search" placeholder="搜索股票代码 / 名称" />
@@ -69,8 +73,8 @@
         </section>
 
         <section class="notice scope-notice">
-          <strong>数据口径</strong>
-          <span>{{ dataScopeText }}</span>
+          <strong>{{ realtimeStatus }}</strong>
+          <span>{{ dataScopeText }}<template v-if="lastRefreshAt"> 最近刷新：{{ lastRefreshAt }}</template></span>
         </section>
 
         <section id="overview-section" class="metric-grid" aria-label="市场情绪概览">
@@ -84,133 +88,224 @@
           </article>
         </section>
 
+        <section class="filter-panel panel">
+          <div class="filter-group">
+            <strong>上市板块</strong>
+            <label v-for="board in marketBoards" :key="board" class="check-chip">
+              <input v-model="selectedBoards" type="checkbox" :value="board" />
+              <span>{{ board }}</span>
+            </label>
+          </div>
+          <div class="filter-group">
+            <strong>连板筛选</strong>
+            <select v-model="boardFilter" aria-label="连板筛选">
+              <option value="all">全部</option>
+              <option value="1">首板</option>
+              <option value="2">2板</option>
+              <option value="3">3板</option>
+              <option value="4">4板</option>
+              <option value="5">5板+</option>
+            </select>
+          </div>
+          <button type="button" @click="clearFilters">清空筛选</button>
+        </section>
+
         <section class="content-grid">
-          <article id="limitups-section" class="panel table-panel">
-            <div class="panel-head">
-              <h2>收盘涨停股票汇总</h2>
-              <div class="table-actions">
-                <select v-model="boardFilter" aria-label="连板筛选">
-                  <option value="all">全部</option>
-                  <option value="1">首板</option>
-                  <option value="2">2板</option>
-                  <option value="3">3板</option>
-                  <option value="4">4板</option>
-                  <option value="5">5板+</option>
-                </select>
-                <select v-model="sortKey" aria-label="表格排序">
-                  <option value="first_limit_time">按首次封板</option>
-                  <option value="consecutive_days">按连板数</option>
-                  <option value="seal_amount">按封单金额</option>
-                  <option value="turnover_amount">按成交额</option>
-                  <option value="turnover_rate">按换手率</option>
-                  <option value="open_times">按炸板次数</option>
-                </select>
-                <button type="button" @click="clearFilters">清空</button>
-                <button type="button" class="primary-action" @click="exportLimitUps">导出</button>
-              </div>
-            </div>
-
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>代码</th>
-                    <th>名称</th>
-                    <th>涨幅</th>
-                    <th>最新价</th>
-                    <th>首次封板</th>
-                    <th>最后封板</th>
-                    <th>行业/原因</th>
-                    <th>成交额</th>
-                    <th>换手率</th>
-                    <th>封单金额</th>
-                    <th>连板</th>
-                    <th>炸板</th>
-                    <th>涨停统计</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="stock in sortedLimitUps" :key="stock.code">
-                    <td>{{ stock.code }}</td>
-                    <td class="stock-name">{{ stock.name }}</td>
-                    <td class="up-text">{{ formatPercent(stock.change_pct) }}</td>
-                    <td>{{ stock.latest_price || '--' }}</td>
-                    <td>{{ stock.first_limit_time || '--' }}</td>
-                    <td>{{ stock.last_limit_time || '--' }}</td>
-                    <td>{{ formatReason(stock) }}</td>
-                    <td>{{ formatMoney(stock.turnover_amount) }}</td>
-                    <td>{{ formatPercent(stock.turnover_rate) }}</td>
-                    <td>{{ formatMoney(stock.seal_amount) }}</td>
-                    <td><span class="badge hot">{{ stock.consecutive_days || 1 }}</span></td>
-                    <td>{{ stock.open_times ?? 0 }}</td>
-                    <td>{{ stock.limit_stats || '--' }}</td>
-                  </tr>
-                  <tr v-if="!sortedLimitUps.length">
-                    <td colspan="13" class="empty">暂无匹配数据</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
-
-          <article id="boards-section" class="panel">
-            <div class="panel-head">
-              <h2>连板分布</h2>
-              <span>{{ totalLimitUps }} 只</span>
-            </div>
-            <div class="bars">
-              <div v-for="item in boardDistribution" :key="item.label" class="bar-row">
-                <span>{{ item.label }}</span>
-                <div class="bar-track">
-                  <i :style="{ width: item.width + '%' }"></i>
+          <div class="main-stack">
+            <article
+              v-for="section in tableSections"
+              :id="section.id"
+              :key="section.key"
+              class="panel table-panel resizable-panel"
+              :style="panelStyle(section.id)"
+            >
+              <div class="panel-head">
+                <h2>{{ section.title }}</h2>
+                <div class="table-actions">
+                  <select :value="section.sortKey" @change="setSort(section.key, $event.target.value)" aria-label="表格排序">
+                    <option value="first_limit_time">按首次封板</option>
+                    <option value="consecutive_days">按连板数</option>
+                    <option value="seal_amount">按封单金额</option>
+                    <option value="turnover_amount">按成交额</option>
+                    <option value="turnover_rate">按换手率</option>
+                    <option value="open_times">按炸板次数</option>
+                    <option value="change_pct">按涨跌幅</option>
+                  </select>
+                  <button type="button" class="primary-action" @click="exportRows(section)">导出</button>
                 </div>
-                <strong>{{ item.count }}只</strong>
               </div>
-            </div>
-          </article>
 
-          <article id="stats-section" class="panel stock-panel">
-            <div class="panel-head">
-              <h2>个股涨停统计</h2>
-              <input v-model.trim="statQuery" placeholder="输入股票代码或名称" />
-            </div>
-            <div v-if="selectedStock" class="stock-detail">
-              <div>
-                <strong>{{ selectedStock.code }}</strong>
-                <h3>{{ selectedStock.name }}</h3>
-                <p>{{ selectedStock.concept || selectedStock.industry || '暂无概念标签' }}</p>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>代码</th>
+                      <th>名称</th>
+                      <th>涨幅</th>
+                      <th>最新价</th>
+                      <th>上市板块</th>
+                      <th>行业</th>
+                      <th>题材</th>
+                      <th>流通市值</th>
+                      <th>总市值</th>
+                      <th>首次封板</th>
+                      <th>最后封板</th>
+                      <th>成交额</th>
+                      <th>换手率</th>
+                      <th>封单金额</th>
+                      <th>连板</th>
+                      <th>炸板</th>
+                      <th>
+                        涨停统计
+                        <span class="help-dot" :title="limitStatsHelp">?</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="stock in section.rows" :key="section.key + stock.code">
+                      <td>{{ stock.code }}</td>
+                      <td
+                        class="stock-name hover-name"
+                        @mouseenter="showStockPopover(stock, $event)"
+                        @mousemove="showStockPopover(stock, $event)"
+                        @mouseleave="hideStockPopover"
+                      >
+                        {{ stock.name }}
+                      </td>
+                      <td :class="rowClass(stock, section.key)">{{ formatPercent(stock.change_pct) }}</td>
+                      <td>{{ stock.latest_price || '--' }}</td>
+                      <td>{{ stock.market_board || '--' }}</td>
+                      <td>{{ stock.industry || '--' }}</td>
+                      <td>{{ stock.theme || '--' }}</td>
+                      <td>{{ formatMoney(stock.float_market_cap) }}</td>
+                      <td>{{ formatMoney(stock.total_market_cap) }}</td>
+                      <td>{{ stock.first_limit_time || '--' }}</td>
+                      <td>{{ stock.last_limit_time || '--' }}</td>
+                      <td>{{ formatMoney(stock.turnover_amount) }}</td>
+                      <td>{{ formatPercent(stock.turnover_rate) }}</td>
+                      <td>{{ formatMoney(stock.seal_amount) }}</td>
+                      <td><span class="badge hot">{{ stock.consecutive_days || 1 }}</span></td>
+                      <td>{{ stock.open_times ?? 0 }}</td>
+                      <td>{{ stock.limit_stats || '--' }}</td>
+                    </tr>
+                    <tr v-if="!section.rows.length">
+                      <td colspan="17" class="empty">暂无匹配数据</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <dl>
-                <div><dt>7日</dt><dd>{{ selectedStock.stats.limit_count_7d }}次</dd></div>
-                <div><dt>30日</dt><dd>{{ selectedStock.stats.limit_count_30d }}次</dd></div>
-                <div><dt>一年</dt><dd>{{ selectedStock.stats.limit_count_1y }}次</dd></div>
-                <div><dt>最高连板</dt><dd>{{ selectedStock.stats.max_consecutive_days }}天</dd></div>
-              </dl>
-              <span>最近涨停：{{ selectedStock.stats.last_limit_date || '--' }}</span>
-            </div>
-            <div v-else class="empty block-empty">输入代码或名称查看统计</div>
-          </article>
+              <span class="resize-handle resize-x" @mousedown="startResize($event, section.id, 'x')"></span>
+              <span class="resize-handle resize-y" @mousedown="startResize($event, section.id, 'y')"></span>
+            </article>
 
-          <article class="panel wide">
-            <div class="panel-head">
-              <h2>断板 / 炸板观察</h2>
-              <span>风险池</span>
-            </div>
-            <div class="compact-list">
-              <div v-for="item in brokenWatch.slice(0, 8)" :key="item.code">
-                <span>{{ item.code }}</span>
-                <strong>{{ item.name }}</strong>
-                <em>{{ formatPercent(item.change_pct) }} / 炸{{ item.open_times || 0 }}次</em>
+            <article id="stats-section" class="panel stock-panel resizable-panel" :style="panelStyle('stats-section')">
+              <div class="panel-head">
+                <h2>个股统计</h2>
+                <input v-model.trim="statQuery" placeholder="输入股票代码或名称" />
               </div>
-              <div v-if="!brokenWatch.length" class="empty block-empty">暂无炸板数据</div>
-            </div>
-          </article>
+              <div v-if="selectedStock" class="stock-detail">
+                <div>
+                  <strong>{{ selectedStock.code }}</strong>
+                  <h3>{{ selectedStock.name }}</h3>
+                  <p>{{ selectedStock.industry || '暂无行业' }} / {{ selectedStock.theme || '暂无题材' }} / {{ selectedStock.market_board || '暂无上市板块' }}</p>
+                </div>
+                <dl>
+                  <div><dt>历史涨停</dt><dd>{{ detailValue(stockStats(selectedStock).total_limit_count) }}</dd></div>
+                  <div><dt>历史炸板</dt><dd>{{ detailValue(stockStats(selectedStock).broken_count_total) }}</dd></div>
+                  <div><dt>最高连板</dt><dd>{{ detailValue(stockStats(selectedStock).max_consecutive_days) }}</dd></div>
+                  <div><dt>今年涨停</dt><dd>{{ detailValue(stockStats(selectedStock).limit_count_ytd) }}</dd></div>
+                  <div><dt>近一年</dt><dd>{{ detailValue(stockStats(selectedStock).limit_count_1y) }}</dd></div>
+                  <div><dt>近三年</dt><dd>{{ detailValue(stockStats(selectedStock).limit_count_3y) }}</dd></div>
+                  <div><dt>首次涨停</dt><dd>{{ detailValue(stockStats(selectedStock).first_limit_date) }}</dd></div>
+                  <div><dt>最近涨停</dt><dd>{{ detailValue(stockStats(selectedStock).last_limit_date) }}</dd></div>
+                </dl>
+              </div>
+              <div v-else class="empty block-empty">输入代码或名称查看统计</div>
+              <span class="resize-handle resize-x" @mousedown="startResize($event, 'stats-section', 'x')"></span>
+              <span class="resize-handle resize-y" @mousedown="startResize($event, 'stats-section', 'y')"></span>
+            </article>
 
-          <aside id="rankings-section" class="right-rail">
+            <article id="themes-section" class="panel resizable-panel" :style="panelStyle('themes-section')">
+              <div class="panel-head">
+                <h2>题材统计</h2>
+                <span>{{ themeNotice }}</span>
+              </div>
+              <div class="rank-grid">
+                <div v-for="item in themeRank" :key="item.name">
+                  <strong>{{ item.name }}</strong>
+                  <span>{{ item.count }}只</span>
+                </div>
+              </div>
+              <span class="resize-handle resize-x" @mousedown="startResize($event, 'themes-section', 'x')"></span>
+              <span class="resize-handle resize-y" @mousedown="startResize($event, 'themes-section', 'y')"></span>
+            </article>
+
+            <article id="industries-section" class="panel resizable-panel" :style="panelStyle('industries-section')">
+              <div class="panel-head">
+                <h2>行业统计</h2>
+                <span>按涨停数量排序</span>
+              </div>
+              <div class="rank-grid">
+                <div v-for="item in industryRank" :key="item.name">
+                  <strong>{{ item.name }}</strong>
+                  <span>{{ item.count }}只</span>
+                </div>
+              </div>
+              <span class="resize-handle resize-x" @mousedown="startResize($event, 'industries-section', 'x')"></span>
+              <span class="resize-handle resize-y" @mousedown="startResize($event, 'industries-section', 'y')"></span>
+            </article>
+          </div>
+
+          <aside id="data-section" class="right-rail resizable-panel" :style="panelStyle('data-section')">
             <article class="panel">
               <div class="panel-head">
-                <h2>最高连板排行</h2>
+                <h2>连板分布</h2>
+                <span>{{ data.sentiment.limit_up_count || 0 }} 只</span>
               </div>
+              <div class="bars">
+                <div v-for="item in boardDistribution" :key="item.label" class="bar-row">
+                  <span>{{ item.label }}</span>
+                  <div class="bar-track"><i :style="{ width: item.width + '%' }"></i></div>
+                  <strong>{{ item.count }}只</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head"><h2>行业涨停排行</h2></div>
+              <ol class="rank-list">
+                <li v-for="item in industryRank.slice(0, 8)" :key="item.name">
+                  <span>{{ item.name }}</span>
+                  <strong>{{ item.count }}只</strong>
+                </li>
+              </ol>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <h2>题材涨停排行</h2>
+              </div>
+              <p class="data-note">{{ themeNotice }}</p>
+              <ol class="rank-list">
+                <li v-for="item in themeRank.slice(0, 8)" :key="item.name">
+                  <span>{{ item.name }}</span>
+                  <strong>{{ item.count }}只</strong>
+                </li>
+              </ol>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head"><h2>上市板块排行</h2></div>
+              <ol class="rank-list">
+                <li v-for="item in marketBoardRank" :key="item.name">
+                  <span>{{ item.name }}</span>
+                  <strong>{{ item.count }}只</strong>
+                </li>
+              </ol>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head"><h2>最高连板排行</h2></div>
               <ol class="rank-list">
                 <li v-for="stock in highestBoardRank" :key="stock.code">
                   <span>{{ stock.name }}</span>
@@ -220,56 +315,6 @@
             </article>
 
             <article class="panel">
-              <div class="panel-head">
-                <h2>昨日涨停晋级</h2>
-                <span>{{ data.sentiment.promoted_count || 0 }} / {{ data.sentiment.yesterday_limit_up_count || 0 }}</span>
-              </div>
-              <ol class="rank-list">
-                <li v-for="stock in promotedStocks.slice(0, 6)" :key="stock.code">
-                  <span>{{ stock.name }}</span>
-                  <strong>{{ stock.consecutive_days }}板</strong>
-                </li>
-              </ol>
-              <div v-if="!promotedStocks.length" class="empty block-empty">暂无晋级数据</div>
-            </article>
-
-            <article class="panel heat-panel">
-              <div class="panel-head">
-                <h2>涨停热力图</h2>
-              </div>
-              <div class="heat-grid">
-                <button v-for="item in heatMap" :key="item.name">
-                  <strong>{{ item.name }}</strong>
-                  <span>{{ item.count }}只</span>
-                </button>
-              </div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <h2>近30天涨停次数榜</h2>
-              </div>
-              <ol class="rank-list">
-                <li v-for="stock in thirtyDayRank" :key="stock.code">
-                  <span>{{ stock.name }}</span>
-                  <strong>{{ stock.limit_count_30d }}次</strong>
-                </li>
-              </ol>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <h2>跌停观察</h2>
-              </div>
-              <ol class="rank-list">
-                <li v-for="stock in limitDowns.slice(0, 6)" :key="stock.code">
-                  <span>{{ stock.name }}</span>
-                  <strong>{{ formatPercent(stock.change_pct) }}</strong>
-                </li>
-              </ol>
-            </article>
-
-            <article id="data-section" class="panel">
               <div class="panel-head">
                 <h2>数据完整性</h2>
                 <span>{{ data.meta.data_status === 'ok' ? '正常' : '异常' }}</span>
@@ -283,8 +328,31 @@
               </div>
               <p class="data-note" v-for="note in data.meta.notes || []" :key="note">{{ note }}</p>
             </article>
+
+            <span class="resize-handle resize-x" @mousedown="startResize($event, 'data-section', 'x')"></span>
+            <span class="resize-handle resize-y" @mousedown="startResize($event, 'data-section', 'y')"></span>
           </aside>
         </section>
+
+        <div v-if="hoveredStock" class="stock-popover" :style="popoverStyle">
+          <div class="popover-head">
+            <strong>{{ hoveredStock.name }}</strong>
+            <span>{{ hoveredStock.code }}</span>
+          </div>
+          <p>{{ hoveredStock.industry || '--' }} / {{ hoveredStock.theme || '--' }} / {{ hoveredStock.market_board || '--' }}</p>
+          <dl>
+            <div><dt>流通市值</dt><dd>{{ formatMoney(hoveredStock.float_market_cap) }}</dd></div>
+            <div><dt>总市值</dt><dd>{{ formatMoney(hoveredStock.total_market_cap) }}</dd></div>
+            <div><dt>历史涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).total_limit_count) }}</dd></div>
+            <div><dt>历史炸板</dt><dd>{{ detailValue(stockStats(hoveredStock).broken_count_total) }}</dd></div>
+            <div><dt>最高连板</dt><dd>{{ detailValue(stockStats(hoveredStock).max_consecutive_days) }}</dd></div>
+            <div><dt>今年涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_ytd) }}</dd></div>
+            <div><dt>近一年</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_1y) }}</dd></div>
+            <div><dt>近三年</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_3y) }}</dd></div>
+            <div><dt>首次涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).first_limit_date) }}</dd></div>
+            <div><dt>最近涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).last_limit_date) }}</dd></div>
+          </dl>
+        </div>
       </main>
     </div>
 
