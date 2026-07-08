@@ -22,6 +22,12 @@
         css.href = './src/feedback-widget.css';
         css.dataset.latestInjected = 'true';
         doc.head.appendChild(css);
+
+        const dateFix = doc.createElement('script');
+        dateFix.src = './src/date-range-fix.js?v=20260709';
+        dateFix.dataset.latestInjected = 'true';
+        doc.body.appendChild(dateFix);
+
         const js = doc.createElement('script');
         js.src = './src/feedback-widget.js';
         js.dataset.latestInjected = 'true';
