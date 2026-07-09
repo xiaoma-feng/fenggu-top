@@ -1,6 +1,9 @@
 (function () {
   const LOOKBACK_DAYS = 92;
   const PATCH_INTERVAL_MS = 5000;
+  const REFRESH_MS = 60000;
+  let manualHistoryLocked = false;
+  let lastRealtimeRefreshAt = 0;
 
   function todayText() {
     return new Date().toLocaleDateString("zh-CN", {
@@ -22,6 +25,31 @@
     }).replaceAll("/", "-");
   }
 
+  function isWeekend(dateText) {
+    const date = new Date(`${dateText}T00:00:00+08:00`);
+    const day = date.getDay();
+    return day === 0 || day === 6;
+  }
+
+  function shanghaiMinutes() {
+    const parts = new Intl.DateTimeFormat("zh-CN", {
+      timeZone: "Asia/Shanghai",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(new Date());
+    const hour = Number(parts.find((part) => part.type === "hour")?.value || 0);
+    const minute = Number(parts.find((part) => part.type === "minute")?.value || 0);
+    return hour * 60 + minute;
+  }
+
+  function marketPhase() {
+    const minutes = shanghaiMinutes();
+    if (minutes >= 570 && minutes < 900) return "intraday";
+    if (minutes >= 900 && minutes < 930) return "settling";
+    return "closed";
+  }
+
   function emptyPayload(dateText, status) {
     return {
       meta: {
@@ -38,7 +66,7 @@
         }).replaceAll("/", "-"),
         data_status: status,
         source: "akshare",
-        notes: ["今日不使用历史日期冒充。选择无交易日时，涨停、炸板、跌停显示为空。"],
+        notes: ["今日数据等待更新，交易时间内按实时接口逐步刷新，不使用前一交易日数据冒充。"],
       },
       sentiment: {
         limit_up_count: 0,
@@ -108,18 +136,22 @@
     const today = todayText();
     if (!dateText) return;
     if (dateText === today) {
+      manualHistoryLocked = false;
       setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "");
+      refreshToday(vm);
       return;
     }
     try {
+      manualHistoryLocked = true;
       const payload = await fetchJson(`./data/history/${dateText}.json`);
       setData(vm, payload, "历史数据", "");
     } catch (error) {
+      const message = isWeekend(dateText) ? "当天非交易日，无数据" : "暂无历史数据";
       setData(
         vm,
         emptyPayload(dateText, "missing_history"),
-        "无交易数据",
-        `${dateText} 没有可用的交易数据。若是周末或节假日，涨停、炸板、跌停会显示为空。`
+        isWeekend(dateText) ? "当天非交易日" : "暂无历史数据",
+        message
       );
     }
   }
@@ -129,8 +161,67 @@
     const input = document.querySelector('.date-select-wrap input[type="date"]');
     if (input && input.value !== vm.selectedDate) input.value = vm.selectedDate || today;
     if ((vm.selectedDate || today) === today && vm.data?.meta?.trade_date !== today) {
+      manualHistoryLocked = false;
       setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "");
       if (input) input.value = today;
+    }
+  }
+
+  async function refreshToday(vm) {
+    const now = Date.now();
+    if (now - lastRealtimeRefreshAt < REFRESH_MS) return;
+    lastRealtimeRefreshAt = now;
+    const today = todayText();
+    if ((vm.selectedDate || today) !== today || manualHistoryLocked) return;
+    const phase = marketPhase();
+    if (phase === "intraday") {
+      try {
+        const payload = await fetchJson(`./api/realtime?date=${today.replaceAll("-", "")}`);
+        setData(
+          vm,
+          {
+            ...emptyPayload(today, "intraday"),
+            ...payload,
+            meta: {
+              ...emptyPayload(today, "intraday").meta,
+              ...(payload.meta || {}),
+              trade_date: today,
+              data_status: payload.meta?.data_status || "intraday",
+            },
+            sentiment: {
+              ...emptyPayload(today, "intraday").sentiment,
+              ...(payload.sentiment || {}),
+              limit_up_count: (payload.limit_ups || []).length,
+              broken_limit_count: (payload.broken_limits || []).length,
+              limit_down_count: (payload.limit_downs || []).length,
+            },
+            limit_ups: payload.limit_ups || [],
+            broken_limits: payload.broken_limits || [],
+            limit_downs: payload.limit_downs || [],
+          },
+          "盘中实时",
+          ""
+        );
+      } catch (error) {
+        setData(vm, emptyPayload(today, "realtime_unavailable"), "实时接口不可用", "实时接口暂时不可用，当前显示今日空数据，不使用前一交易日数据冒充。");
+      }
+      return;
+    }
+
+    if (phase === "settling") {
+      setData(vm, emptyPayload(today, "settling"), "等待收盘固化", "");
+      return;
+    }
+
+    try {
+      const payload = await fetchJson("./data/latest.json");
+      if (payload?.meta?.trade_date === today) {
+        setData(vm, payload, "收盘锁定", "");
+      } else {
+        setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "");
+      }
+    } catch (error) {
+      setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "");
     }
   }
 
@@ -139,9 +230,14 @@
     if (!vm) return;
     installDatePicker(vm);
     correctToday(vm);
+    refreshToday(vm);
   }
 
   run();
   window.addEventListener("load", run);
   setInterval(run, PATCH_INTERVAL_MS);
+  setInterval(() => {
+    const vm = getVm();
+    if (vm) refreshToday(vm);
+  }, REFRESH_MS);
 })();
