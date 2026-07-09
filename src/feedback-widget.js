@@ -1,11 +1,11 @@
 (() => {
-  const api = "/api/feedbacks";
+  const STORAGE_KEY = "fenggu-feedbacks";
   let items = [];
   let adminMode = false;
   let adminToken = localStorage.getItem("fenggu-admin-token") || "";
   let panel;
   let list;
-  let errorNode;
+  let messageNode;
 
   function hideOldItems() {
     document.querySelectorAll(".side-nav button, .tabs button").forEach((button) => {
@@ -18,14 +18,7 @@
       const node = document.getElementById(id);
       if (node) node.style.display = "none";
     });
-    const tools = document.querySelector(".top-tools");
-    const picker = document.querySelector(".date-picker");
-    if (tools && picker && !document.querySelector(".date-range-note")) {
-      const note = document.createElement("span");
-      note.className = "date-range-note";
-      note.textContent = "近3个月";
-      picker.insertAdjacentElement("afterend", note);
-    }
+    document.querySelectorAll(".topbar .tabs, .tabs").forEach((node) => node.remove());
   }
 
   function esc(value) {
@@ -36,6 +29,32 @@
       "'": "&#39;",
       '"': "&quot;",
     }[char]));
+  }
+
+  function readFeedbacks() {
+    try {
+      const rows = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      return Array.isArray(rows)
+        ? rows.sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || ""))).slice(0, 50)
+        : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeFeedbacks(rows) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify((rows || []).slice(0, 50)));
+  }
+
+  function refreshItems() {
+    items = readFeedbacks();
+    render();
+  }
+
+  function setMessage(text, type = "") {
+    if (!messageNode) return;
+    messageNode.textContent = text || "";
+    messageNode.dataset.type = type;
   }
 
   function formatTime(value) {
@@ -68,83 +87,49 @@
             </div>
           </article>
         `).join("")
-      : '<div class="feedback-empty">暂无反馈</div>';
+      : '<div class="feedback-empty">暂无反馈。</div>';
   }
 
-  async function loadFeedbacks() {
-    try {
-      const response = await fetch(api, { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = await response.json();
-      items = payload.feedbacks || [];
-      if (errorNode) errorNode.textContent = "";
-      render();
-    } catch (error) {
-      if (errorNode) errorNode.textContent = "反馈暂时不可用";
-    }
-  }
-
-  async function submitFeedback(event) {
+  function submitFeedback(event) {
     event.preventDefault();
     const form = event.currentTarget;
     const content = form.querySelector("textarea").value.trim();
     const displayName = form.querySelector("input").value.trim();
     if (!content) {
-      if (errorNode) errorNode.textContent = "请先填写反馈内容";
+      setMessage("请先填写反馈内容", "error");
       return;
     }
-    const button = form.querySelector(".fg-submit");
-    button.disabled = true;
-    button.textContent = "提交中";
-    try {
-      const response = await fetch(api, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, display_name: displayName }),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = await response.json();
-      items = [payload.feedback, ...items].filter(Boolean).slice(0, 30);
-      closeModal();
-      render();
-      if (errorNode) errorNode.textContent = "";
-    } catch (error) {
-      if (errorNode) errorNode.textContent = "反馈提交失败，请稍后再试";
-    } finally {
-      button.disabled = false;
-      button.textContent = "提交反馈";
-    }
+    const feedback = {
+      id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      display_name: displayName || "匿名用户",
+      content,
+      like_count: 0,
+      created_at: new Date().toISOString(),
+    };
+    items = [feedback, ...readFeedbacks()].slice(0, 50);
+    writeFeedbacks(items);
+    closeModal();
+    render();
+    setMessage("提交成功。", "success");
   }
 
-  async function likeFeedback(id) {
+  function likeFeedback(id) {
     const key = `fenggu-liked:${id}`;
     if (localStorage.getItem(key)) return;
-    try {
-      const response = await fetch(`${api}/${encodeURIComponent(id)}/like`, { method: "POST" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = await response.json();
-      localStorage.setItem(key, "1");
-      items = items.map((item) => item.id === id ? payload.feedback : item);
-      render();
-    } catch (error) {
-      if (errorNode) errorNode.textContent = "点赞失败";
-    }
+    items = readFeedbacks().map((item) =>
+      item.id === id ? { ...item, like_count: Number(item.like_count || 0) + 1 } : item,
+    );
+    writeFeedbacks(items);
+    localStorage.setItem(key, "1");
+    render();
   }
 
-  async function deleteFeedback(id) {
+  function deleteFeedback(id) {
     if (!adminToken) return;
     if (!confirm("确认删除这条反馈？")) return;
-    try {
-      const response = await fetch(`${api}/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        headers: { "X-Admin-Token": adminToken },
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      items = items.filter((item) => item.id !== id);
-      render();
-    } catch (error) {
-      if (errorNode) errorNode.textContent = "删除失败，请检查管理员密钥";
-    }
+    items = readFeedbacks().filter((item) => item.id !== id);
+    writeFeedbacks(items);
+    render();
   }
 
   function openModal() {
@@ -188,8 +173,12 @@
   }
 
   function mount() {
-    if (document.querySelector(".sidebar-feedback")) return;
     hideOldItems();
+    if (document.querySelector(".sidebar-feedback")) {
+      const existingButton = document.querySelector(".feedback-open");
+      if (existingButton) existingButton.textContent = "提交反馈";
+      return;
+    }
     const source = document.querySelector(".source-note");
     if (!source) return;
     panel = document.createElement("section");
@@ -199,14 +188,14 @@
         <h2>用户反馈</h2>
         <button type="button" class="feedback-admin">管理</button>
       </div>
-      <div class="feedback-error"></div>
-      <div class="feedback-list"><div class="feedback-empty">加载中</div></div>
+      <div class="feedback-message"></div>
+      <div class="feedback-list"><div class="feedback-empty">暂无反馈。</div></div>
       <span class="feedback-resize"></span>
     `;
     const button = document.createElement("button");
     button.type = "button";
     button.className = "feedback-open";
-    button.textContent = "意见反馈";
+    button.textContent = "提交反馈";
     source.parentNode.insertBefore(panel, source);
     source.parentNode.insertBefore(button, source);
 
@@ -226,7 +215,7 @@
     document.body.appendChild(modal);
 
     list = panel.querySelector(".feedback-list");
-    errorNode = panel.querySelector(".feedback-error");
+    messageNode = panel.querySelector(".feedback-message");
     button.addEventListener("click", openModal);
     modal.addEventListener("click", (event) => { if (event.target === modal) closeModal(); });
     modal.querySelector(".fg-modal-close").addEventListener("click", closeModal);
@@ -254,8 +243,8 @@
       if (del) deleteFeedback(del.dataset.delete);
     });
     setupResize();
-    loadFeedbacks();
-    setInterval(loadFeedbacks, 30000);
+    refreshItems();
+    setInterval(refreshItems, 30000);
     setInterval(hideOldItems, 1000);
   }
 
