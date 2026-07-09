@@ -10,7 +10,7 @@
     </style>
   </head>
   <body>
-    <iframe id="site" src="./index.html" title="峰股top"></iframe>
+    <iframe id="site" src="./index.html?v=20260709-fix4" title="峰股top"></iframe>
     <div class="tip">最新版入口</div>
     <script>
       const frame = document.getElementById('site');
@@ -19,17 +19,17 @@
         if (!doc || doc.querySelector('[data-latest-injected]')) return;
         const css = doc.createElement('link');
         css.rel = 'stylesheet';
-        css.href = './src/feedback-widget.css';
+        css.href = './src/feedback-widget.css?v=20260709-fix4';
         css.dataset.latestInjected = 'true';
         doc.head.appendChild(css);
 
         const dateFix = doc.createElement('script');
-        dateFix.src = './src/date-range-fix-audit.js?v=20260709-audit';
+        dateFix.src = './src/date-range-fix-audit.js?v=20260709-fix4';
         dateFix.dataset.latestInjected = 'true';
         doc.body.appendChild(dateFix);
 
         const js = doc.createElement('script');
-        js.src = './src/feedback-widget.js';
+        js.src = './src/feedback-widget.js?v=20260709-fix4';
         js.dataset.latestInjected = 'true';
         doc.body.appendChild(js);
       });
