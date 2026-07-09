@@ -6,33 +6,75 @@
     <title>峰股top 最新版</title>
     <style>
       html, body, iframe { width: 100%; height: 100%; margin: 0; border: 0; background: #070b15; }
-      .tip { position: fixed; right: 14px; bottom: 14px; z-index: 10; color: #91a0b8; font: 12px Microsoft YaHei, Arial; }
+      .tip { position: fixed; right: 14px; bottom: 14px; z-index: 10; color: #91a0b8; font: 12px Microsoft YaHei, Arial; pointer-events: none; }
     </style>
   </head>
   <body>
-    <iframe id="site" src="./index.html?v=20260709-holidays" title="峰股top"></iframe>
+    <iframe id="site" src="./index.html?v=20260709-clean-entry-2" title="峰股top"></iframe>
     <div class="tip">最新版入口</div>
     <script>
+      const VERSION = '20260709-clean-entry-2';
       const frame = document.getElementById('site');
-      frame.addEventListener('load', () => {
-        const doc = frame.contentDocument;
-        if (!doc || doc.querySelector('[data-latest-injected]')) return;
+
+      function injectCleanCss(doc) {
+        if (!doc || doc.getElementById('latest-clean-css')) return;
+        const style = doc.createElement('style');
+        style.id = 'latest-clean-css';
+        style.textContent = `
+          .topbar .tabs, .tabs, #stats-section, #themes-section, #industries-section { display: none !important; }
+          .topbar { justify-content: flex-start !important; }
+          .date-select-wrap, .date-picker select, .date-picker option, .date-picker em { display: none !important; }
+          .date-picker input[type="date"] { display: block !important; color: #edf4ff !important; background: #0c1425 !important; min-width: 130px !important; }
+          .right-rail { min-width: 340px !important; }
+          .rank-list li { grid-template-columns: 28px minmax(0, 1fr) auto !important; }
+          .rank-list span { overflow: visible !important; text-overflow: clip !important; white-space: nowrap !important; }
+          .feedback-open { display: block !important; }
+        `;
+        doc.head.appendChild(style);
+      }
+
+      function appendScript(doc, id, src) {
+        if (!doc || doc.getElementById(id)) return;
+        const script = doc.createElement('script');
+        script.id = id;
+        script.src = src + '?v=' + VERSION;
+        doc.body.appendChild(script);
+      }
+
+      function appendCss(doc, id, href) {
+        if (!doc || doc.getElementById(id)) return;
         const css = doc.createElement('link');
+        css.id = id;
         css.rel = 'stylesheet';
-        css.href = './src/feedback-widget.css?v=20260709-holidays';
-        css.dataset.latestInjected = 'true';
+        css.href = href + '?v=' + VERSION;
         doc.head.appendChild(css);
+      }
 
-        const dateFix = doc.createElement('script');
-        dateFix.src = './src/date-range-fix-audit.js?v=20260709-holidays';
-        dateFix.dataset.latestInjected = 'true';
-        doc.body.appendChild(dateFix);
+      function cleanSideNav(doc) {
+        const allowed = ['首页概览', '涨停汇总', '炸板汇总', '跌停汇总'];
+        doc.querySelectorAll('.side-nav button').forEach((btn) => {
+          const text = (btn.textContent || '').trim();
+          if (!allowed.some((item) => text.startsWith(item))) btn.remove();
+        });
+      }
 
-        const js = doc.createElement('script');
-        js.src = './src/feedback-widget.js?v=20260709-holidays';
-        js.dataset.latestInjected = 'true';
-        doc.body.appendChild(js);
+      function inject() {
+        const doc = frame.contentDocument;
+        if (!doc || !doc.body) return;
+        injectCleanCss(doc);
+        cleanSideNav(doc);
+        appendCss(doc, 'latest-feedback-css', './src/feedback-widget.css');
+        appendScript(doc, 'latest-date-fix', './src/date-range-fix-audit.js');
+        appendScript(doc, 'latest-feedback-js', './src/feedback-widget.js');
+      }
+
+      frame.addEventListener('load', () => {
+        inject();
+        setTimeout(inject, 200);
+        setTimeout(inject, 1000);
+        setTimeout(inject, 2500);
       });
+      setInterval(inject, 1500);
     </script>
   </body>
 </html>
