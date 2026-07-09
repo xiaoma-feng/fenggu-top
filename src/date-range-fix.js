@@ -2,6 +2,7 @@
   const LOOKBACK_DAYS = 92;
   const PATCH_INTERVAL_MS = 5000;
   const REFRESH_MS = 60000;
+  const FEEDBACK_KEY = "fenggu-feedbacks";
   let manualHistoryLocked = false;
   let lastRealtimeRefreshAt = 0;
 
@@ -101,6 +102,32 @@
     return document.querySelector("#app")?.__vue_app__?._instance?.proxy;
   }
 
+  function readFeedbacks() {
+    try {
+      const rows = JSON.parse(localStorage.getItem(FEEDBACK_KEY) || "[]");
+      return Array.isArray(rows)
+        ? rows.sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || ""))).slice(0, 50)
+        : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeFeedbacks(rows) {
+    localStorage.setItem(FEEDBACK_KEY, JSON.stringify((rows || []).slice(0, 50)));
+  }
+
+  function createFeedback(content, displayName) {
+    return {
+      id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      display_name: displayName || "匿名用户",
+      content,
+      like_count: 0,
+      created_at: new Date().toISOString(),
+      local: true,
+    };
+  }
+
   function setData(vm, payload, status, errorText) {
     vm.data = payload;
     vm.selectedDate = payload.meta.trade_date;
@@ -130,6 +157,63 @@
       oldEm.className = "date-range-note";
       oldEm.textContent = "近3个月";
     }
+  }
+
+  function hideTopTabs() {
+    const tabs = document.querySelector(".topbar .tabs");
+    if (tabs) tabs.remove();
+  }
+
+  function installFeedbackFallback(vm) {
+    if (vm.__fengguFeedbackFallbackInstalled) return;
+    vm.__fengguFeedbackFallbackInstalled = true;
+    vm.feedbackItems = readFeedbacks();
+    vm.feedbackError = "";
+
+    vm.loadFeedbacks = async () => {
+      vm.feedbackItems = readFeedbacks();
+      vm.feedbackError = "";
+    };
+
+    vm.openFeedbackModal = () => {
+      vm.feedbackModalOpen = true;
+      vm.feedbackForm = { displayName: "", content: "" };
+      vm.feedbackError = "";
+    };
+
+    vm.submitFeedback = async () => {
+      const content = String(vm.feedbackForm?.content || "").trim();
+      if (!content) {
+        vm.feedbackError = "请先填写反馈内容";
+        return;
+      }
+      const feedback = createFeedback(content, String(vm.feedbackForm?.displayName || "").trim());
+      const next = [feedback, ...readFeedbacks()];
+      writeFeedbacks(next);
+      vm.feedbackItems = next;
+      vm.feedbackForm = { displayName: "", content: "" };
+      vm.feedbackModalOpen = false;
+      vm.feedbackError = "提交成功";
+    };
+
+    vm.likeFeedback = async (item) => {
+      const likedKey = `fenggu-liked:${item.id}`;
+      if (localStorage.getItem(likedKey)) return;
+      const next = readFeedbacks().map((row) =>
+        row.id === item.id ? { ...row, like_count: Number(row.like_count || 0) + 1 } : row,
+      );
+      writeFeedbacks(next);
+      localStorage.setItem(likedKey, "1");
+      vm.feedbackItems = next;
+      vm.feedbackError = "";
+    };
+
+    vm.deleteFeedback = async (item) => {
+      const next = readFeedbacks().filter((row) => row.id !== item.id);
+      writeFeedbacks(next);
+      vm.feedbackItems = next;
+      vm.feedbackError = "";
+    };
   }
 
   async function loadSelectedDate(vm, dateText) {
@@ -228,6 +312,8 @@
   function run() {
     const vm = getVm();
     if (!vm) return;
+    hideTopTabs();
+    installFeedbackFallback(vm);
     installDatePicker(vm);
     correctToday(vm);
     refreshToday(vm);
