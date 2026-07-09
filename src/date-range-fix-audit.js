@@ -34,7 +34,7 @@
 
   function marketPhase() {
     const minutes = shanghaiMinutes();
-    if (minutes >= 570 && minutes < 900) return "intraday";
+    if ((minutes >= 570 && minutes < 690) || (minutes >= 780 && minutes < 900)) return "intraday";
     if (minutes >= 900 && minutes < 930) return "settling";
     return "closed";
   }
@@ -129,15 +129,18 @@
 
   function installDatePicker(vm) {
     const wrap = document.querySelector(".date-select-wrap");
-    if (!wrap || wrap.querySelector('input[type="date"]')) return;
-    wrap.innerHTML = "";
-    const input = document.createElement("input");
-    input.type = "date";
-    input.setAttribute("aria-label", "选择历史日期");
+    if (!wrap) return;
+    let input = wrap.querySelector('input[type="date"]');
+    if (!input) {
+      wrap.innerHTML = "";
+      input = document.createElement("input");
+      input.type = "date";
+      input.setAttribute("aria-label", "选择历史日期");
+      input.addEventListener("change", () => loadSelectedDate(vm, input.value));
+      wrap.appendChild(input);
+    }
     input.max = todayText();
-    input.value = vm.selectedDate || todayText();
-    input.addEventListener("change", () => loadSelectedDate(vm, input.value));
-    wrap.appendChild(input);
+    if (!manualHistoryLocked) input.value = todayText();
 
     const oldEm = document.querySelector(".date-picker em");
     if (oldEm) {
@@ -149,8 +152,14 @@
   }
 
   function hideTopTabs() {
-    const tabs = document.querySelector(".topbar .tabs");
-    if (tabs) tabs.remove();
+    document.querySelectorAll(".topbar .tabs, .tabs").forEach((tabs) => tabs.remove());
+  }
+
+  function fixFeedbackCopy() {
+    const button = document.querySelector(".feedback-open");
+    if (button) button.textContent = "提交反馈";
+    const empty = document.querySelector(".feedback-empty");
+    if (empty) empty.textContent = "暂无反馈。";
   }
 
   function fixScopeCopy() {
@@ -165,6 +174,7 @@
     vm.__fengguFeedbackFallbackInstalled = true;
     vm.feedbackItems = readFeedbacks();
     vm.feedbackError = "";
+    vm.feedbackNotice = "";
 
     vm.loadFeedbacks = async () => {
       vm.feedbackItems = readFeedbacks();
@@ -175,12 +185,14 @@
       vm.feedbackModalOpen = true;
       vm.feedbackForm = { displayName: "", content: "" };
       vm.feedbackError = "";
+      vm.feedbackNotice = "";
     };
 
     vm.submitFeedback = async () => {
       const content = String(vm.feedbackForm?.content || "").trim();
       if (!content) {
         vm.feedbackError = "请先填写反馈内容";
+        vm.feedbackNotice = "";
         return;
       }
       const feedback = createFeedback(content, String(vm.feedbackForm?.displayName || "").trim());
@@ -189,7 +201,8 @@
       vm.feedbackItems = next;
       vm.feedbackForm = { displayName: "", content: "" };
       vm.feedbackModalOpen = false;
-      vm.feedbackError = "提交成功";
+      vm.feedbackError = "";
+      vm.feedbackNotice = "提交成功。";
     };
 
     vm.likeFeedback = async (item) => {
@@ -217,8 +230,8 @@
     if (!dateText) return;
     if (dateText === today) {
       manualHistoryLocked = false;
-      setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "");
-      refreshToday(vm);
+      setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "今日数据等待更新。");
+      refreshToday(vm, true);
       return;
     }
     try {
@@ -226,7 +239,7 @@
       const payload = await fetchJson(`./data/history/${dateText}.json`);
       setData(vm, payload, "历史数据", "");
     } catch {
-      const message = isWeekend(dateText) ? "当天非交易日，无数据" : "暂无历史数据";
+      const message = isWeekend(dateText) ? "当天非交易日，无数据。" : "暂无历史数据。";
       setData(
         vm,
         emptyPayload(dateText, "missing_history"),
@@ -239,20 +252,19 @@
   function correctToday(vm) {
     const today = todayText();
     const input = document.querySelector('.date-select-wrap input[type="date"]');
-    if (input && input.value !== vm.selectedDate) input.value = vm.selectedDate || today;
-    if ((vm.selectedDate || today) === today && vm.data?.meta?.trade_date !== today) {
-      manualHistoryLocked = false;
-      setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "");
-      if (input) input.value = today;
+    if (manualHistoryLocked) return;
+    if (vm.data?.meta?.trade_date !== today || vm.selectedDate !== today) {
+      setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "今日数据等待更新。");
     }
+    if (input) input.value = today;
   }
 
-  async function refreshToday(vm) {
+  async function refreshToday(vm, force) {
     const now = Date.now();
-    if (now - lastRealtimeRefreshAt < REFRESH_MS) return;
+    if (!force && now - lastRealtimeRefreshAt < REFRESH_MS) return;
     lastRealtimeRefreshAt = now;
     const today = todayText();
-    if ((vm.selectedDate || today) !== today || manualHistoryLocked) return;
+    if (manualHistoryLocked) return;
     const phase = marketPhase();
     if (phase === "intraday") {
       try {
@@ -289,7 +301,7 @@
     }
 
     if (phase === "settling") {
-      setData(vm, emptyPayload(today, "settling"), "等待收盘固化", "");
+      setData(vm, emptyPayload(today, "settling"), "等待收盘固化", "今日数据等待更新。");
       return;
     }
 
@@ -298,10 +310,10 @@
       if (payload?.meta?.trade_date === today) {
         setData(vm, payload, "收盘锁定", "");
       } else {
-        setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "");
+        setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "今日数据等待更新。");
       }
     } catch {
-      setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "");
+      setData(vm, emptyPayload(today, "waiting_today"), "今日等待更新", "今日数据等待更新。");
     }
   }
 
@@ -309,6 +321,7 @@
     const vm = getVm();
     if (!vm) return;
     hideTopTabs();
+    fixFeedbackCopy();
     fixScopeCopy();
     installFeedbackFallback(vm);
     installDatePicker(vm);
