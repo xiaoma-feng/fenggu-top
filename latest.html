@@ -10,10 +10,10 @@
     </style>
   </head>
   <body>
-    <iframe id="site" src="./index.html?v=20260709-clean-entry-2" title="峰股top"></iframe>
+    <iframe id="site" src="./index.html?v=20260709-clean-entry-3" title="峰股top"></iframe>
     <div class="tip">最新版入口</div>
     <script>
-      const VERSION = '20260709-clean-entry-2';
+      const VERSION = '20260709-clean-entry-3';
       const frame = document.getElementById('site');
 
       function injectCleanCss(doc) {
@@ -51,10 +51,10 @@
       }
 
       function cleanSideNav(doc) {
-        const allowed = ['首页概览', '涨停汇总', '炸板汇总', '跌停汇总'];
+        const blocked = ['个股统计', '题材统计', '行业统计', '数据中心'];
         doc.querySelectorAll('.side-nav button').forEach((btn) => {
           const text = (btn.textContent || '').trim();
-          if (!allowed.some((item) => text.startsWith(item))) btn.remove();
+          if (text && blocked.some((item) => text.startsWith(item))) btn.remove();
         });
       }
 
