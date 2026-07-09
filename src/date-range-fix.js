@@ -1,5 +1,4 @@
 (function () {
-  const LOOKBACK_DAYS = 92;
   const PATCH_INTERVAL_MS = 5000;
   const REFRESH_MS = 60000;
   const FEEDBACK_KEY = "fenggu-feedbacks";
@@ -8,17 +7,6 @@
 
   function todayText() {
     return new Date().toLocaleDateString("zh-CN", {
-      timeZone: "Asia/Shanghai",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).replaceAll("/", "-");
-  }
-
-  function addDays(dateText, days) {
-    const date = new Date(`${dateText}T00:00:00+08:00`);
-    date.setDate(date.getDate() + days);
-    return date.toLocaleDateString("zh-CN", {
       timeZone: "Asia/Shanghai",
       year: "numeric",
       month: "2-digit",
@@ -146,7 +134,6 @@
     const input = document.createElement("input");
     input.type = "date";
     input.setAttribute("aria-label", "选择历史日期");
-    input.min = addDays(todayText(), -LOOKBACK_DAYS);
     input.max = todayText();
     input.value = vm.selectedDate || todayText();
     input.addEventListener("change", () => loadSelectedDate(vm, input.value));
@@ -155,13 +142,22 @@
     const oldEm = document.querySelector(".date-picker em");
     if (oldEm) {
       oldEm.className = "date-range-note";
-      oldEm.textContent = "近3个月";
+      oldEm.textContent = "历史日期";
     }
+    const note = document.querySelector(".date-range-note");
+    if (note) note.textContent = "历史日期";
   }
 
   function hideTopTabs() {
     const tabs = document.querySelector(".topbar .tabs");
     if (tabs) tabs.remove();
+  }
+
+  function fixScopeCopy() {
+    const scope = document.querySelector(".scope-notice span");
+    if (scope && scope.textContent.includes("近 3 个月任意日期")) {
+      scope.textContent = scope.textContent.replace("近 3 个月任意日期", "任意历史日期");
+    }
   }
 
   function installFeedbackFallback(vm) {
@@ -313,6 +309,7 @@
     const vm = getVm();
     if (!vm) return;
     hideTopTabs();
+    fixScopeCopy();
     installFeedbackFallback(vm);
     installDatePicker(vm);
     correctToday(vm);
