@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="峰股top - A股涨停情绪数据中心" />
     <title>峰股top | A股涨停情绪数据中心</title>
-    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260709-clean-entry-2" />
   </head>
   <body>
     <div id="app" v-cloak>
@@ -29,6 +29,34 @@
           </button>
         </nav>
 
+        <section class="sidebar-feedback resizable-panel" :style="panelStyle('feedback-panel')">
+          <div class="sidebar-feedback-head">
+            <h2>用户反馈</h2>
+            <button type="button" class="admin-link" @click="toggleAdminMode">
+              {{ isAdminMode ? '退出管理' : '管理' }}
+            </button>
+          </div>
+          <div v-if="feedbackError" class="feedback-error">{{ feedbackError }}</div>
+          <div v-if="feedbackNotice" class="feedback-success">{{ feedbackNotice }}</div>
+          <div class="feedback-list">
+            <article v-for="item in feedbackItems" :key="item.id" class="feedback-item">
+              <div class="feedback-meta">
+                <strong>{{ item.display_name || '匿名用户' }}</strong>
+                <span>{{ formatFeedbackTime(item.created_at) }}</span>
+              </div>
+              <p>{{ item.content }}</p>
+              <div class="feedback-actions">
+                <button type="button" @click="likeFeedback(item)">赞 {{ item.like_count || 0 }}</button>
+                <button v-if="isAdminMode" type="button" class="danger" @click="deleteFeedback(item)">删除</button>
+              </div>
+            </article>
+            <div v-if="!feedbackItems.length && !feedbackError" class="empty feedback-empty">暂无反馈。</div>
+          </div>
+          <span class="resize-handle resize-y" @mousedown="startResize($event, 'feedback-panel', 'y')"></span>
+        </section>
+
+        <button type="button" class="feedback-open" @click="openFeedbackModal">提交反馈</button>
+
         <div class="source-note">
           <span>数据源：AKShare / 东方财富专题</span>
           <span>交易日：{{ data.meta.trade_date || '--' }}</span>
@@ -39,27 +67,20 @@
 
       <main class="shell">
         <header class="topbar">
-          <div class="tabs">
-            <button
-              v-for="item in navItems.slice(0, 6)"
-              :key="item.key"
-              :class="{ active: activeSection === item.key }"
-              @click="scrollToSection(item)"
-            >
-              {{ item.label }}
-            </button>
-          </div>
-
           <div class="top-tools">
             <label class="date-picker">
               <span>日期</span>
-              <div class="date-select-wrap">
-                <select v-model="selectedDate" @change="loadDate(selectedDate)" aria-label="选择历史日期">
-                  <option v-for="date in availableDates" :key="date" :value="date">{{ date }}</option>
-                </select>
-              </div>
-              <em>近3个月</em>
+              <input
+                id="datePicker"
+                type="date"
+                :value="selectedDate || todayText"
+                :min="minDateText"
+                :max="todayText"
+                :disabled="isDateLoading"
+                @change="loadDataByDate($event.target.value)"
+              />
             </label>
+            <span class="date-range-note">近3个月</span>
             <button type="button" class="refresh-toggle" @click="toggleRefresh">
               {{ refreshPaused ? '恢复刷新' : '暂停刷新' }}
             </button>
@@ -73,6 +94,11 @@
         <section v-if="loadError" class="notice">
           <strong>数据暂时不可用</strong>
           <span>{{ loadError }}</span>
+        </section>
+
+        <section v-if="isDateLoading" class="notice loading-notice">
+          <strong>数据切换中</strong>
+          <span>正在加载 {{ selectedDate || todayText }} 的全站数据...</span>
         </section>
 
         <section class="notice scope-notice">
@@ -200,63 +226,6 @@
               <span class="resize-handle resize-x" @mousedown="startResize($event, section.id, 'x')"></span>
               <span class="resize-handle resize-y" @mousedown="startResize($event, section.id, 'y')"></span>
             </article>
-
-            <article id="stats-section" class="panel stock-panel resizable-panel" :style="panelStyle('stats-section')">
-              <div class="panel-head">
-                <h2>个股统计</h2>
-                <input v-model.trim="statQuery" placeholder="输入股票代码或名称" />
-              </div>
-              <div v-if="selectedStock" class="stock-detail">
-                <div>
-                  <strong>{{ selectedStock.code }}</strong>
-                  <h3>{{ selectedStock.name }}</h3>
-                  <p>{{ selectedStock.industry || '暂无行业' }} / {{ selectedStock.theme || '暂无题材' }} / {{ selectedStock.market_board || '暂无上市板块' }}</p>
-                </div>
-                <dl>
-                  <div><dt>历史涨停</dt><dd>{{ detailValue(stockStats(selectedStock).total_limit_count) }}</dd></div>
-                  <div><dt>历史炸板</dt><dd>{{ detailValue(stockStats(selectedStock).broken_count_total) }}</dd></div>
-                  <div><dt>最高连板</dt><dd>{{ detailValue(stockStats(selectedStock).max_consecutive_days) }}</dd></div>
-                  <div><dt>今年涨停</dt><dd>{{ detailValue(stockStats(selectedStock).limit_count_ytd) }}</dd></div>
-                  <div><dt>近一年</dt><dd>{{ detailValue(stockStats(selectedStock).limit_count_1y) }}</dd></div>
-                  <div><dt>近三年</dt><dd>{{ detailValue(stockStats(selectedStock).limit_count_3y) }}</dd></div>
-                  <div><dt>首次涨停</dt><dd>{{ detailValue(stockStats(selectedStock).first_limit_date) }}</dd></div>
-                  <div><dt>最近涨停</dt><dd>{{ detailValue(stockStats(selectedStock).last_limit_date) }}</dd></div>
-                </dl>
-              </div>
-              <div v-else class="empty block-empty">输入代码或名称查看统计</div>
-              <span class="resize-handle resize-x" @mousedown="startResize($event, 'stats-section', 'x')"></span>
-              <span class="resize-handle resize-y" @mousedown="startResize($event, 'stats-section', 'y')"></span>
-            </article>
-
-            <article id="themes-section" class="panel resizable-panel" :style="panelStyle('themes-section')">
-              <div class="panel-head">
-                <h2>题材统计</h2>
-                <span>{{ themeNotice }}</span>
-              </div>
-              <div class="rank-grid">
-                <div v-for="item in themeRank" :key="item.name">
-                  <strong>{{ item.name }}</strong>
-                  <span>{{ item.count }}只</span>
-                </div>
-              </div>
-              <span class="resize-handle resize-x" @mousedown="startResize($event, 'themes-section', 'x')"></span>
-              <span class="resize-handle resize-y" @mousedown="startResize($event, 'themes-section', 'y')"></span>
-            </article>
-
-            <article id="industries-section" class="panel resizable-panel" :style="panelStyle('industries-section')">
-              <div class="panel-head">
-                <h2>行业统计</h2>
-                <span>按涨停数量排序</span>
-              </div>
-              <div class="rank-grid">
-                <div v-for="item in industryRank" :key="item.name">
-                  <strong>{{ item.name }}</strong>
-                  <span>{{ item.count }}只</span>
-                </div>
-              </div>
-              <span class="resize-handle resize-x" @mousedown="startResize($event, 'industries-section', 'x')"></span>
-              <span class="resize-handle resize-y" @mousedown="startResize($event, 'industries-section', 'y')"></span>
-            </article>
           </div>
 
           <aside id="data-section" class="right-rail resizable-panel" :style="panelStyle('data-section')">
@@ -277,7 +246,7 @@
             <article class="panel">
               <div class="panel-head"><h2>行业涨停排行</h2></div>
               <ol class="rank-list">
-                <li v-for="item in industryRank.slice(0, 8)" :key="item.name">
+                <li v-for="item in industryRank.slice(0, 12)" :key="item.name">
                   <span>{{ item.name }}</span>
                   <strong>{{ item.count }}只</strong>
                 </li>
@@ -306,34 +275,6 @@
                 </li>
               </ol>
             </article>
-
-            <article class="panel">
-              <div class="panel-head"><h2>最高连板排行</h2></div>
-              <ol class="rank-list">
-                <li v-for="stock in highestBoardRank" :key="stock.code">
-                  <span>{{ stock.name }}</span>
-                  <strong>{{ stock.consecutive_days }}板</strong>
-                </li>
-              </ol>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <h2>数据完整性</h2>
-                <span>{{ data.meta.data_status === 'ok' ? '正常' : '异常' }}</span>
-              </div>
-              <div class="quality-list">
-                <div v-for="item in dataCompleteness" :key="item.label">
-                  <span :class="{ ok: item.ok }"></span>
-                  <strong>{{ item.label }}</strong>
-                  <em>{{ item.count }} 条</em>
-                </div>
-              </div>
-              <p class="data-note" v-for="note in data.meta.notes || []" :key="note">{{ note }}</p>
-            </article>
-
-            <span class="resize-handle resize-x" @mousedown="startResize($event, 'data-section', 'x')"></span>
-            <span class="resize-handle resize-y" @mousedown="startResize($event, 'data-section', 'y')"></span>
           </aside>
         </section>
 
@@ -343,23 +284,34 @@
             <span>{{ hoveredStock.code }}</span>
           </div>
           <p>{{ hoveredStock.industry || '--' }} / {{ hoveredStock.theme || '--' }} / {{ hoveredStock.market_board || '--' }}</p>
-          <dl>
-            <div><dt>流通市值</dt><dd>{{ formatMoney(hoveredStock.float_market_cap) }}</dd></div>
-            <div><dt>总市值</dt><dd>{{ formatMoney(hoveredStock.total_market_cap) }}</dd></div>
-            <div><dt>历史涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).total_limit_count) }}</dd></div>
-            <div><dt>历史炸板</dt><dd>{{ detailValue(stockStats(hoveredStock).broken_count_total) }}</dd></div>
-            <div><dt>最高连板</dt><dd>{{ detailValue(stockStats(hoveredStock).max_consecutive_days) }}</dd></div>
-            <div><dt>今年涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_ytd) }}</dd></div>
-            <div><dt>近一年</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_1y) }}</dd></div>
-            <div><dt>近三年</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_3y) }}</dd></div>
-            <div><dt>首次涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).first_limit_date) }}</dd></div>
-            <div><dt>最近涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).last_limit_date) }}</dd></div>
-          </dl>
+        </div>
+
+        <div v-if="feedbackModalOpen" class="modal-backdrop" @click.self="closeFeedbackModal">
+          <form class="feedback-modal" @submit.prevent="submitFeedback">
+            <div class="modal-head">
+              <h2>意见反馈</h2>
+              <button type="button" @click="closeFeedbackModal" aria-label="关闭">×</button>
+            </div>
+            <label>
+              <span>昵称（可不填）</span>
+              <input v-model.trim="feedbackForm.displayName" maxlength="20" placeholder="匿名用户" />
+            </label>
+            <label>
+              <span>反馈内容</span>
+              <textarea v-model.trim="feedbackForm.content" maxlength="300" placeholder="请输入建议、问题或数据反馈"></textarea>
+            </label>
+            <div class="modal-foot">
+              <span>{{ feedbackForm.content.length }}/300</span>
+              <button type="submit" class="primary-action" :disabled="feedbackSubmitting">
+                {{ feedbackSubmitting ? '提交中' : '提交反馈' }}
+              </button>
+            </div>
+          </form>
         </div>
       </main>
     </div>
 
-    <script src="./src/fallback-data.js"></script>
-    <script type="module" src="./src/app.js"></script>
+    <script src="./src/fallback-data.js?v=20260709-clean-entry-2"></script>
+    <script type="module" src="./src/app.js?v=20260709-clean-entry-2"></script>
   </body>
 </html>
