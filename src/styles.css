@@ -44,6 +44,22 @@ button {
   display: none;
 }
 
+#boot-status {
+  align-items: center;
+  background: #070b15;
+  color: #91a0b8;
+  display: flex;
+  font-size: 14px;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 9999;
+}
+
+#app:not([v-cloak]) + #boot-status {
+  display: none;
+}
+
 #app {
   display: grid;
   grid-template-columns: 238px minmax(0, 1fr);

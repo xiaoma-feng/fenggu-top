@@ -1,4 +1,4 @@
-import { createApp, computed, ref, onMounted, onBeforeUnmount, nextTick } from "https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js";
+import { createApp, computed, ref, onMounted, onBeforeUnmount, nextTick } from "./vendor/vue.esm-browser.prod.js";
 
 const emptyData = { meta: {}, sentiment: {}, rankings: {}, limit_ups: [], broken_limits: [], limit_downs: [], stats: [] };
 const marketBoards = ["主板", "创业板", "科创板", "北交所"];
