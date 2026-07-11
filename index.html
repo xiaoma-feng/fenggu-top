@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="峰股top - A股涨停情绪数据中心" />
     <title>峰股top | A股涨停情绪数据中心</title>
-    <link rel="stylesheet" href="./src/styles.css?v=20260710-feedback-resize-v2" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260711-public-site" />
   </head>
   <body>
     <div id="app" v-cloak>
@@ -80,7 +80,7 @@
                 @change="loadDataByDate($event.target.value)"
               />
             </label>
-            <span class="date-range-note">近3个月</span>
+            <span class="date-range-note">历史日期</span>
             <button type="button" class="refresh-toggle" @click="toggleRefresh">
               {{ refreshPaused ? '恢复刷新' : '暂停刷新' }}
             </button>
@@ -226,6 +226,7 @@
               <span class="resize-handle resize-x" @mousedown="startResize($event, section.id, 'x')"></span>
               <span class="resize-handle resize-y" @mousedown="startResize($event, section.id, 'y')"></span>
             </article>
+
           </div>
 
           <aside id="data-section" class="right-rail resizable-panel" :style="panelStyle('data-section')">
@@ -246,7 +247,7 @@
             <article class="panel">
               <div class="panel-head"><h2>行业涨停排行</h2></div>
               <ol class="rank-list">
-                <li v-for="item in industryRank.slice(0, 12)" :key="item.name">
+                <li v-for="item in industryRank.slice(0, 8)" :key="item.name">
                   <span>{{ item.name }}</span>
                   <strong>{{ item.count }}只</strong>
                 </li>
@@ -275,6 +276,34 @@
                 </li>
               </ol>
             </article>
+
+            <article class="panel">
+              <div class="panel-head"><h2>最高连板排行</h2></div>
+              <ol class="rank-list">
+                <li v-for="stock in highestBoardRank" :key="stock.code">
+                  <span>{{ stock.name }}</span>
+                  <strong>{{ stock.consecutive_days }}板</strong>
+                </li>
+              </ol>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <h2>数据完整性</h2>
+                <span>{{ data.meta.data_status === 'ok' ? '正常' : '异常' }}</span>
+              </div>
+              <div class="quality-list">
+                <div v-for="item in dataCompleteness" :key="item.label">
+                  <span :class="{ ok: item.ok }"></span>
+                  <strong>{{ item.label }}</strong>
+                  <em>{{ item.count }} 条</em>
+                </div>
+              </div>
+              <p class="data-note" v-for="note in data.meta.notes || []" :key="note">{{ note }}</p>
+            </article>
+
+            <span class="resize-handle resize-x" @mousedown="startResize($event, 'data-section', 'x')"></span>
+            <span class="resize-handle resize-y" @mousedown="startResize($event, 'data-section', 'y')"></span>
           </aside>
         </section>
 
@@ -284,6 +313,18 @@
             <span>{{ hoveredStock.code }}</span>
           </div>
           <p>{{ hoveredStock.industry || '--' }} / {{ hoveredStock.theme || '--' }} / {{ hoveredStock.market_board || '--' }}</p>
+          <dl>
+            <div><dt>流通市值</dt><dd>{{ formatMoney(hoveredStock.float_market_cap) }}</dd></div>
+            <div><dt>总市值</dt><dd>{{ formatMoney(hoveredStock.total_market_cap) }}</dd></div>
+            <div><dt>历史涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).total_limit_count) }}</dd></div>
+            <div><dt>历史炸板</dt><dd>{{ detailValue(stockStats(hoveredStock).broken_count_total) }}</dd></div>
+            <div><dt>最高连板</dt><dd>{{ detailValue(stockStats(hoveredStock).max_consecutive_days) }}</dd></div>
+            <div><dt>今年涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_ytd) }}</dd></div>
+            <div><dt>近一年</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_1y) }}</dd></div>
+            <div><dt>近三年</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_3y) }}</dd></div>
+            <div><dt>首次涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).first_limit_date) }}</dd></div>
+            <div><dt>最近涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).last_limit_date) }}</dd></div>
+          </dl>
         </div>
 
         <div v-if="feedbackModalOpen" class="modal-backdrop" @click.self="closeFeedbackModal">
@@ -311,7 +352,9 @@
       </main>
     </div>
 
-    <div id="boot-status" role="status">页面加载中...</div>\n\n    <script src="./src/fallback-data.js?v=20260710-feedback-resize-v2"></script>
-    <script type="module" src="./src/app.js?v=20260710-feedback-resize-v2"></script>
+    <div id="boot-status" role="status">页面加载中...</div>
+
+    <script src="./src/fallback-data.js?v=20260711-public-site"></script>
+    <script type="module" src="./src/app.js?v=20260711-public-site"></script>
   </body>
 </html>
