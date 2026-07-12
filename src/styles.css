@@ -400,6 +400,16 @@ button {
   accent-color: var(--red);
 }
 
+.check-chip span {
+  white-space: nowrap;
+}
+
+.theme-cell {
+  line-height: 1.45;
+  max-width: 300px;
+  white-space: normal;
+}
+
 .content-grid {
   align-items: start;
   display: grid;

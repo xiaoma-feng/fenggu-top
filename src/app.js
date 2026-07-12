@@ -17,23 +17,12 @@ const refreshMs = 60000;
 const feedbackRefreshMs = 30000;
 const feedbackStorageKey = "fenggu-feedbacks";
 const layoutKey = "fenggu-layout:";
-const themeNotice = "题材为系统识别，仅供参考";
+const themeNotice = "题材来自东方财富概念数据，仅供参考";
 const limitStatsHelp = "涨停统计格式为 N/M，表示近 M 个交易日内涨停 N 次，例如 6/6 表示近 6 个交易日涨停 6 次。";
 const dateRangeMonths = 3;
 let holidaysCache = null;
-const themeRules = [
-  ["机器人", ["机器人", "减速器", "伺服", "工业母机", "智能制造"]],
-  ["PCB", ["PCB", "印制电路", "线路板", "覆铜板", "电子元件", "元件"]],
-  ["算力", ["算力", "服务器", "数据中心", "液冷", "光模块", "CPO"]],
-  ["创新药", ["创新药", "医药", "生物制品", "化学制药", "医疗"]],
-  ["军工", ["军工", "航天", "航空", "卫星", "国防"]],
-  ["半导体", ["半导体", "芯片", "集成电路", "封测"]],
-  ["AI硬件", ["AI", "人工智能", "消费电子", "计算机设", "光学光电"]],
-  ["消费电子", ["消费电子", "电子", "光学光电"]],
-  ["有色金属", ["有色", "稀土", "金属", "冶钢", "矿业"]],
-  ["固态电池", ["固态电池", "电池", "锂电", "新能源"]],
-  ["商业航天", ["商业航天", "卫星", "航天"]],
-];
+const themeSeparators = /[，,；;、|/\n\r]+/;
+const ignoredThemes = new Set(["", "-", "--", "其他", "未知", "暂无", "暂无题材", "无", "null", "none", "nan"]);
 
 function numberValue(value, fallback = 0) {
   const parsed = Number(value);
@@ -52,13 +41,28 @@ function inferMarketBoard(code) {
   return "主板";
 }
 
-function inferTheme(stock) {
-  if (stock?.theme) return stock.theme;
-  const text = [stock?.name, stock?.concept, stock?.industry, stock?.reason, stock?.selected_reason]
-    .map((value) => String(value || "").toLowerCase())
-    .join(" ");
-  const match = themeRules.find(([, keywords]) => keywords.some((keyword) => text.includes(keyword.toLowerCase())));
-  return match ? match[0] : "其他";
+function marketBoardOf(stock) {
+  return marketBoards.includes(stock?.market_board) ? stock.market_board : inferMarketBoard(stock?.code);
+}
+
+function normalizeThemes(values) {
+  const source = Array.isArray(values) ? values : [values];
+  const themes = [];
+  const seen = new Set();
+  for (const value of source.flat(Infinity)) {
+    for (const part of String(value || "").split(themeSeparators)) {
+      const theme = part.trim();
+      if (!theme || theme.startsWith("<generator object") || ignoredThemes.has(theme.toLowerCase()) || seen.has(theme)) continue;
+      seen.add(theme);
+      themes.push(theme);
+    }
+  }
+  return themes;
+}
+
+function stockThemes(stock) {
+  const savedThemes = normalizeThemes(stock?.themes);
+  return savedThemes.length ? savedThemes : normalizeThemes([stock?.concept, stock?.theme]);
 }
 
 function normalizeIndustry(value) {
@@ -71,11 +75,13 @@ function normalizeIndustry(value) {
 }
 
 function normalizeStock(stock) {
+  const themes = stockThemes(stock);
   return {
     ...stock,
     industry: normalizeIndustry(stock.industry),
-    market_board: stock.market_board || inferMarketBoard(stock.code),
-    theme: inferTheme(stock),
+    market_board: marketBoardOf(stock),
+    themes,
+    theme: themes.join("、"),
   };
 }
 
@@ -485,6 +491,14 @@ createApp({
     ]);
 
     const highestBoard = computed(() => Math.max(0, ...limitUps.value.map((item) => numberValue(item.consecutive_days, 1))));
+    const limitUpBoardCounts = computed(() => {
+      const counts = Object.fromEntries(marketBoards.map((board) => [board, 0]));
+      for (const stock of limitUps.value) {
+        const board = marketBoardOf(stock);
+        counts[board] += 1;
+      }
+      return counts;
+    });
     const brokenRate = computed(() => {
       const total = totalLimitUps.value + brokenCount.value;
       return total ? ((brokenCount.value / total) * 100).toFixed(1) : "0.0";
@@ -500,7 +514,7 @@ createApp({
     ]);
 
     function boardAllowed(stock) {
-      return !selectedBoards.value.length || selectedBoards.value.includes(stock.market_board || inferMarketBoard(stock.code));
+      return !selectedBoards.value.length || selectedBoards.value.includes(marketBoardOf(stock));
     }
 
     function searchAllowed(stock, localQuery = query.value) {
@@ -563,7 +577,13 @@ createApp({
     function rankByField(rows, field) {
       const counts = new Map();
       for (const stock of rows) {
-        const key = field === "industry" ? normalizeIndustry(stock[field]) || "其他" : stock[field] || "其他";
+        if (field === "theme") {
+          for (const theme of stockThemes(stock)) {
+            counts.set(theme, (counts.get(theme) || 0) + 1);
+          }
+          continue;
+        }
+        const key = normalizeIndustry(stock[field]) || "其他";
         counts.set(key, (counts.get(key) || 0) + 1);
       }
       return [...counts.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 12);
@@ -578,8 +598,7 @@ createApp({
       }
       return [...merged.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
     });
-    const themeRank = computed(() => data.value.rankings.theme_limit_rank || rankByField(limitUps.value, "theme"));
-    const marketBoardRank = computed(() => data.value.rankings.market_board_limit_rank || rankByField(limitUps.value, "market_board"));
+    const themeRank = computed(() => rankByField(limitUps.value, "theme"));
     const highestBoardRank = computed(() => [...limitUps.value].sort((a, b) => numberValue(b.consecutive_days, 1) - numberValue(a.consecutive_days, 1)).slice(0, 6));
     const promotedStocks = computed(() => data.value.sentiment.promoted_stocks || []);
     const dataCompleteness = computed(() => [
@@ -969,12 +988,12 @@ createApp({
       limitStatsHelp,
       tableSections,
       boardDistribution,
+      limitUpBoardCounts,
       highestBoardRank,
       promotedStocks,
       dataCompleteness,
       industryRank,
       themeRank,
-      marketBoardRank,
       hoveredStock,
       popoverStyle,
       feedbackItems,

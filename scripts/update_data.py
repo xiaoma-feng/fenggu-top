@@ -5,32 +5,26 @@ import json
 import math
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, time as datetime_time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+import requests
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 HISTORY_DIR = DATA_DIR / "history"
+THEME_CACHE_PATH = DATA_DIR / "eastmoney-theme-cache.json"
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 DEFAULT_STATS_LOOKBACK_DAYS = 370
+DEFAULT_HISTORY_DAYS = 92
 MARKET_DATA_READY_TIME = datetime_time(15, 30)
-THEME_RULES = [
-    ("机器人", ["机器人", "减速器", "伺服", "工业母机", "智能制造"]),
-    ("PCB", ["PCB", "印制电路", "线路板", "覆铜板", "电子元件", "元件"]),
-    ("算力", ["算力", "服务器", "数据中心", "液冷", "光模块", "CPO"]),
-    ("创新药", ["创新药", "医药", "生物制品", "化学制药", "医疗"]),
-    ("军工", ["军工", "航天", "航空", "卫星", "国防"]),
-    ("半导体", ["半导体", "芯片", "集成电路", "封测"]),
-    ("AI硬件", ["AI", "人工智能", "消费电子", "计算机设", "光学光电"]),
-    ("消费电子", ["消费电子", "电子", "光学光电"]),
-    ("有色金属", ["有色", "稀土", "金属", "冶钢", "矿业"]),
-    ("固态电池", ["固态电池", "电池", "锂电", "新能源"]),
-    ("商业航天", ["商业航天", "卫星", "航天"]),
-]
+EASTMONEY_CORE_THEME_URL = "https://emweb.securities.eastmoney.com/PC_HSF10/CoreConception/PageAjax"
+THEME_SPLIT_PATTERN = re.compile(r"[，,；;、|/\\\n\r]+")
+THEME_PLACEHOLDERS = {"", "-", "--", "其他", "未知", "暂无", "暂无题材", "无", "null", "none", "nan"}
 
 
 def clean_value(value):
@@ -126,15 +120,38 @@ def infer_market_board(code):
     return "主板"
 
 
-def infer_theme(row):
-    text = " ".join(
-        as_text(row.get(key))
-        for key in ["name", "concept", "industry", "reason", "selected_reason"]
-    )
-    for theme, keywords in THEME_RULES:
-        if any(keyword.lower() in text.lower() for keyword in keywords):
-            return theme
-    return "其他"
+def normalize_theme_values(values):
+    if not isinstance(values, (list, tuple, set)):
+        values = [values]
+
+    normalized = []
+    seen = set()
+    for value in values:
+        if isinstance(value, (list, tuple, set)):
+            candidates = normalize_theme_values(value)
+        else:
+            candidates = THEME_SPLIT_PATTERN.split(as_text(value))
+        for candidate in candidates:
+            name = as_text(candidate).strip("、，,;；|/ ")
+            if (
+                not name
+                or name.startswith("<generator object")
+                or name.lower() in THEME_PLACEHOLDERS
+                or name in THEME_PLACEHOLDERS
+            ):
+                continue
+            if name not in seen:
+                seen.add(name)
+                normalized.append(name)
+    return normalized
+
+
+def set_record_themes(record, values):
+    themes = normalize_theme_values(values)
+    record["themes"] = themes
+    record["theme"] = "、".join(themes)
+    record["concept"] = "、".join(themes)
+    return record
 
 
 def previous_business_day(day):
@@ -190,6 +207,136 @@ def call_akshare(name, *args, **kwargs):
         return pd.DataFrame()
 
 
+def eastmoney_security_code(code):
+    text = as_text(code).zfill(6)
+    if text.startswith(("6", "688")):
+        return f"SH{text}"
+    if text.startswith(("4", "8", "920")):
+        return f"BJ{text}"
+    return f"SZ{text}"
+
+
+def fetch_eastmoney_core_themes(code):
+    session = requests.Session()
+    session.trust_env = False
+    headers = {
+        "Accept": "application/json, text/plain, */*",
+        "Referer": "https://emweb.securities.eastmoney.com/",
+        "User-Agent": "Mozilla/5.0",
+    }
+
+    for attempt in range(3):
+        try:
+            response = session.get(
+                EASTMONEY_CORE_THEME_URL,
+                params={"code": eastmoney_security_code(code)},
+                headers=headers,
+                timeout=15,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            boards = payload.get("ssbk") if isinstance(payload, dict) else None
+            if not isinstance(boards, list):
+                return None
+            return normalize_theme_values([
+                item.get("BOARD_NAME")
+                for item in boards
+                if as_text(item.get("IS_PRECISE")) == "1"
+            ])
+        except (requests.RequestException, ValueError):
+            if attempt < 2:
+                time.sleep(0.5 * (attempt + 1))
+    return None
+
+
+def load_theme_cache():
+    default = {
+        "source": "eastmoney_core_conception",
+        "updated_at": "",
+        "stocks": {},
+    }
+    try:
+        cache = json.loads(THEME_CACHE_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return default
+
+    if not isinstance(cache, dict):
+        return default
+    stocks = cache.get("stocks")
+    if not isinstance(stocks, dict):
+        stocks = {}
+    return {**default, **cache, "stocks": stocks}
+
+
+def save_theme_cache(cache):
+    DATA_DIR.mkdir(exist_ok=True)
+    cache["source"] = "eastmoney_core_conception"
+    cache["updated_at"] = datetime.now(SHANGHAI).strftime("%Y-%m-%d %H:%M")
+    THEME_CACHE_PATH.write_text(
+        json.dumps(cache, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def resolve_eastmoney_themes(codes, cache, refresh_current=False):
+    code_list = sorted({as_text(code).zfill(6) for code in codes if as_text(code)})
+    today = datetime.now(SHANGHAI).strftime("%Y-%m-%d")
+    resolved = {}
+    to_fetch = []
+
+    for code in code_list:
+        entry = cache["stocks"].get(code)
+        entry_themes = normalize_theme_values(entry.get("themes")) if isinstance(entry, dict) else []
+        is_current = isinstance(entry, dict) and entry.get("fetched_date") == today
+        raw_entry_themes = entry.get("themes", []) if isinstance(entry, dict) else []
+        cache_is_valid = not any(
+            as_text(name).startswith("<generator object")
+            for name in (raw_entry_themes if isinstance(raw_entry_themes, list) else [raw_entry_themes])
+        )
+        if entry is not None and cache_is_valid and (not refresh_current or is_current):
+            resolved[code] = entry_themes
+        else:
+            to_fetch.append(code)
+
+    if to_fetch:
+        successful = 0
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            futures = {executor.submit(fetch_eastmoney_core_themes, code): code for code in to_fetch}
+            for future in as_completed(futures):
+                code = futures[future]
+                try:
+                    themes = future.result()
+                except Exception:
+                    themes = None
+                if themes is None:
+                    cached = cache["stocks"].get(code, {})
+                    resolved[code] = normalize_theme_values(cached.get("themes"))
+                    continue
+                normalized = normalize_theme_values(themes)
+                cache["stocks"][code] = {
+                    "themes": normalized,
+                    "fetched_date": today,
+                }
+                resolved[code] = normalized
+                successful += 1
+        print(f"eastmoney core themes: fetched {successful}/{len(to_fetch)} stocks")
+
+    return resolved
+
+
+def enrich_limit_up_themes(rows, cache, refresh_current=False):
+    themes_by_code = resolve_eastmoney_themes(
+        [row.get("code") for row in rows],
+        cache,
+        refresh_current=refresh_current,
+    )
+    for row in rows:
+        set_record_themes(
+            row,
+            [row.get("themes"), row.get("concept"), themes_by_code.get(as_text(row.get("code")).zfill(6), [])],
+        )
+
+
 def limit_stats_parts(value):
     text = as_text(value)
     match = re.search(r"(\d+)\s*/\s*(\d+)", text)
@@ -225,9 +372,9 @@ def fetch_limit_ups(trade_date):
                 "open_times": as_int(pick(row, ["炸板次数", "打开次数"], 0)),
                 "reason": as_text(pick(row, ["涨停原因", "涨停原因类别", "原因"], "")),
                 **stats,
-            }
+        }
         record["market_board"] = infer_market_board(record["code"])
-        record["theme"] = infer_theme(record)
+        set_record_themes(record, record.get("concept"))
         rows.append(record)
     return [row for row in rows if row["code"] and row["name"]]
 
@@ -255,9 +402,9 @@ def fetch_broken_limits(trade_date):
                 "industry": as_text(pick(row, ["所属行业", "行业"], "")),
                 "reason": as_text(pick(row, ["炸板原因", "原因", "涨停原因"], "")),
                 **stats,
-            }
+        }
         record["market_board"] = infer_market_board(record["code"])
-        record["theme"] = infer_theme(record)
+        set_record_themes(record, record.get("concept"))
         rows.append(record)
     return [row for row in rows if row["code"] and row["name"]]
 
@@ -282,9 +429,9 @@ def fetch_limit_downs(trade_date):
                 "consecutive_days": as_int(pick(row, ["连续跌停"], 0)),
                 "open_times": as_int(pick(row, ["开板次数"], 0)),
                 "industry": as_text(pick(row, ["所属行业", "行业"], "")),
-            }
+        }
         record["market_board"] = infer_market_board(record["code"])
-        record["theme"] = infer_theme(record)
+        set_record_themes(record, record.get("concept"))
         rows.append(record)
     return [row for row in rows if row["code"] and row["name"]]
 
@@ -308,9 +455,9 @@ def fetch_strong_stocks(trade_date):
                 "selected_reason": as_text(pick(row, ["入选理由"], "")),
                 "industry": as_text(pick(row, ["所属行业", "行业"], "")),
                 **stats,
-            }
+        }
         record["market_board"] = infer_market_board(record["code"])
-        record["theme"] = infer_theme(record)
+        set_record_themes(record, record.get("concept"))
         rows.append(record)
     return [row for row in rows if row["code"] and row["name"]]
 
@@ -334,9 +481,9 @@ def fetch_sub_new_stocks(trade_date):
                 "is_new_high": as_text(pick(row, ["是否新高"], "")),
                 "industry": as_text(pick(row, ["所属行业", "行业"], "")),
                 **stats,
-            }
+        }
         record["market_board"] = infer_market_board(record["code"])
-        record["theme"] = infer_theme(record)
+        set_record_themes(record, record.get("concept"))
         rows.append(record)
     return [row for row in rows if row["code"] and row["name"]]
 
@@ -482,6 +629,10 @@ def build_stats(limit_ups, trade_date, history):
 def rank_by_field(rows, field, top_n=12):
     counts = {}
     for row in rows:
+        if field in {"theme", "themes"}:
+            for theme in normalize_theme_values(row.get("themes") or row.get("theme")):
+                counts[theme] = counts.get(theme, 0) + 1
+            continue
         key = as_text(row.get(field)) or "其他"
         counts[key] = counts.get(key, 0) + 1
     return [
@@ -490,7 +641,67 @@ def rank_by_field(rows, field, top_n=12):
     ]
 
 
-def build_payload(trade_date_arg=None, stats_lookback_days=DEFAULT_STATS_LOOKBACK_DAYS, allow_intraday=False):
+def date_range_back(day, days):
+    for offset in range(days):
+        current = day - timedelta(days=offset)
+        if current.weekday() < 5:
+            yield current
+
+
+def build_limit_only_payload(trade_date, limit_ups, history, now, stats_lookback_days):
+    stats = build_stats(limit_ups, trade_date, list(history)) if limit_ups else []
+    highest_board = max([as_int(item.get("consecutive_days"), 1) for item in limit_ups] or [0])
+    return {
+        "meta": {
+            "site_name": "峰股top",
+            "trade_date": trade_date,
+            "updated_at": now.strftime("%Y-%m-%d %H:%M"),
+            "market_data_ready_time": "15:30",
+            "source": "akshare + eastmoney",
+            "data_status": "ok" if limit_ups else "empty_or_failed",
+            "stats_lookback_days": stats_lookback_days,
+            "history_scope_days": DEFAULT_HISTORY_DAYS,
+            "notes": [
+                "历史日期主要用于查看每日涨停池，支持近 3 个月追溯。",
+                "题材来自东方财富核心题材接口，支持一只股票归属多个题材。",
+            ],
+        },
+        "sentiment": {
+            "limit_up_count": len(limit_ups),
+            "limit_down_count": 0,
+            "broken_limit_count": 0,
+            "highest_board": highest_board,
+            "first_board_count": sum(as_int(item.get("consecutive_days"), 1) == 1 for item in limit_ups),
+            "multi_board_count": sum(as_int(item.get("consecutive_days"), 1) >= 2 for item in limit_ups),
+            "limit_up_turnover_amount": sum(as_number(item.get("turnover_amount"), 0) for item in limit_ups),
+            "limit_up_seal_amount": sum(as_number(item.get("seal_amount"), 0) for item in limit_ups),
+            "broken_rate": 0,
+            "previous_trade_date": "",
+            "yesterday_limit_up_count": 0,
+            "promoted_count": 0,
+            "promotion_rate": 0,
+            "promoted_stocks": [],
+        },
+        "rankings": {
+            "industry_limit_rank": rank_by_field(limit_ups, "industry"),
+            "theme_limit_rank": rank_by_field(limit_ups, "theme"),
+            "market_board_limit_rank": rank_by_field(limit_ups, "market_board"),
+        },
+        "limit_ups": limit_ups,
+        "broken_limits": [],
+        "limit_downs": [],
+        "strong_stocks": [],
+        "sub_new_stocks": [],
+        "stats": stats,
+    }
+
+
+def build_payload(
+    trade_date_arg=None,
+    stats_lookback_days=DEFAULT_STATS_LOOKBACK_DAYS,
+    allow_intraday=False,
+    theme_cache=None,
+):
     now = datetime.now(SHANGHAI)
     completed_trade_date = latest_completed_trade_date(now)
     if trade_date_arg:
@@ -504,8 +715,10 @@ def build_payload(trade_date_arg=None, stats_lookback_days=DEFAULT_STATS_LOOKBAC
     else:
         trade_date = completed_trade_date.strftime("%Y-%m-%d")
     ak_date = trade_date.replace("-", "")
+    theme_cache = theme_cache if theme_cache is not None else load_theme_cache()
 
     limit_ups = fetch_limit_ups(ak_date)
+    enrich_limit_up_themes(limit_ups, theme_cache, refresh_current=True)
     broken_limits = fetch_broken_limits(ak_date)
     limit_downs = fetch_limit_downs(ak_date)
     strong_stocks = fetch_strong_stocks(ak_date)
@@ -529,12 +742,12 @@ def build_payload(trade_date_arg=None, stats_lookback_days=DEFAULT_STATS_LOOKBAC
             "trade_date": trade_date,
             "updated_at": now.strftime("%Y-%m-%d %H:%M"),
             "market_data_ready_time": "15:30",
-            "source": "akshare",
+            "source": "akshare + eastmoney",
             "data_status": "ok" if limit_ups else "empty_or_failed",
             "stats_lookback_days": stats_lookback_days,
             "notes": [
                 "涨停池、炸板池、跌停池来自 AKShare 东方财富专题接口。",
-                "AKShare 当前涨停池不提供标准化涨停原因，页面优先展示行业和原始涨停统计。",
+                "题材来自东方财富核心题材接口，支持一只股票归属多个题材。",
             ],
         },
         "sentiment": {
@@ -563,18 +776,103 @@ def build_payload(trade_date_arg=None, stats_lookback_days=DEFAULT_STATS_LOOKBAC
     }
 
 
+def available_history_dates():
+    return sorted({path.stem for path in HISTORY_DIR.glob("*.json")}, reverse=True)
+
+
+def write_json(path, payload):
+    payload["meta"]["available_dates"] = available_history_dates()
+    if payload["meta"]["trade_date"] not in payload["meta"]["available_dates"]:
+        payload["meta"]["available_dates"] = sorted(
+            [payload["meta"]["trade_date"], *payload["meta"]["available_dates"]],
+            reverse=True,
+        )
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def write_payload(payload):
     DATA_DIR.mkdir(exist_ok=True)
     HISTORY_DIR.mkdir(exist_ok=True)
     latest_path = DATA_DIR / "latest.json"
     history_path = HISTORY_DIR / f"{payload['meta']['trade_date']}.json"
-    existing_dates = {path.stem for path in HISTORY_DIR.glob("*.json")}
-    existing_dates.add(payload["meta"]["trade_date"])
-    payload["meta"]["available_dates"] = sorted(existing_dates, reverse=True)
-    text = json.dumps(payload, ensure_ascii=False, indent=2)
-    latest_path.write_text(text + "\n", encoding="utf-8")
-    history_path.write_text(text + "\n", encoding="utf-8")
+    write_json(history_path, payload)
+    write_json(latest_path, payload)
     return latest_path, history_path
+
+
+def write_history_range(
+    latest_payload,
+    history_days=DEFAULT_HISTORY_DAYS,
+    stats_lookback_days=DEFAULT_STATS_LOOKBACK_DAYS,
+    theme_cache=None,
+):
+    DATA_DIR.mkdir(exist_ok=True)
+    HISTORY_DIR.mkdir(exist_ok=True)
+    now = datetime.now(SHANGHAI)
+    latest_date = datetime.strptime(latest_payload["meta"]["trade_date"], "%Y-%m-%d").date()
+    history = build_history_snapshot(latest_payload["meta"]["trade_date"], stats_lookback_days)
+    theme_cache = theme_cache if theme_cache is not None else load_theme_cache()
+    written = []
+    for day in date_range_back(latest_date, history_days):
+        trade_date = day.strftime("%Y-%m-%d")
+        history_path = HISTORY_DIR / f"{trade_date}.json"
+        if trade_date == latest_payload["meta"]["trade_date"]:
+            payload = latest_payload
+        else:
+            limit_ups = fetch_limit_ups(day.strftime("%Y%m%d"))
+            enrich_limit_up_themes(limit_ups, theme_cache)
+            payload = build_limit_only_payload(trade_date, limit_ups, history, now, stats_lookback_days)
+        write_json(history_path, payload)
+        written.append(history_path)
+        time.sleep(0.03)
+    write_json(DATA_DIR / "latest.json", latest_payload)
+    return written
+
+
+def refresh_saved_theme_data():
+    paths = [DATA_DIR / "latest.json", *sorted(HISTORY_DIR.glob("*.json"))]
+    payloads = []
+    seen_paths = set()
+    for path in paths:
+        if path in seen_paths or not path.exists():
+            continue
+        seen_paths.add(path)
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict) and isinstance(payload.get("limit_ups"), list):
+            payloads.append((path, payload))
+
+    cache = load_theme_cache()
+    all_limit_ups = [stock for _, payload in payloads for stock in payload.get("limit_ups", [])]
+    enrich_limit_up_themes(all_limit_ups, cache)
+
+    latest_path = DATA_DIR / "latest.json"
+    for path, payload in payloads:
+        if path == latest_path:
+            enrich_limit_up_themes(payload["limit_ups"], cache, refresh_current=True)
+
+        themes_by_code = {
+            as_text(stock.get("code")).zfill(6): normalize_theme_values(stock.get("themes"))
+            for stock in payload.get("limit_ups", [])
+        }
+        for stat in payload.get("stats", []):
+            themes = themes_by_code.get(as_text(stat.get("code")).zfill(6), [])
+            stat["themes"] = themes
+            stat["theme"] = "、".join(themes)
+
+        rankings = payload.setdefault("rankings", {})
+        rankings["theme_limit_rank"] = rank_by_field(payload.get("limit_ups", []), "theme")
+        meta = payload.setdefault("meta", {})
+        meta["source"] = "akshare + eastmoney"
+        notes = [note for note in meta.get("notes", []) if "题材" not in as_text(note)]
+        notes.append("题材来自东方财富核心题材接口，支持一只股票归属多个题材。")
+        meta["notes"] = notes
+        write_json(path, payload)
+
+    save_theme_cache(cache)
+    print(f"refreshed themes for {len(payloads)} payloads and {len(all_limit_ups)} limit-up rows")
 
 
 def main():
@@ -591,12 +889,49 @@ def main():
         action="store_true",
         help="Allow updating a not-yet-closed trade date. Use only for manual checks.",
     )
+    parser.add_argument(
+        "--history-days",
+        type=int,
+        default=DEFAULT_HISTORY_DAYS,
+        help="Calendar days of selectable historical limit-up data to write.",
+    )
+    parser.add_argument(
+        "--no-history-range",
+        action="store_true",
+        help="Only write latest.json and the selected trade date history file.",
+    )
+    parser.add_argument(
+        "--refresh-themes-only",
+        action="store_true",
+        help="Refresh saved JSON files from the Eastmoney core-theme cache without fetching market pools.",
+    )
     args = parser.parse_args()
 
-    payload = build_payload(args.date, args.stats_lookback_days, args.allow_intraday)
+    if args.refresh_themes_only:
+        refresh_saved_theme_data()
+        return
+
+    theme_cache = load_theme_cache()
+    payload = build_payload(
+        args.date,
+        args.stats_lookback_days,
+        args.allow_intraday,
+        theme_cache=theme_cache,
+    )
     latest_path, history_path = write_payload(payload)
+    written_history = []
+    if not args.no_history_range:
+        written_history = write_history_range(
+            payload,
+            args.history_days,
+            args.stats_lookback_days,
+            theme_cache=theme_cache,
+        )
+    save_theme_cache(theme_cache)
     print(f"wrote {latest_path}")
     print(f"wrote {history_path}")
+    if written_history:
+        print(f"history_range={len(written_history)} files")
     print(
         f"limit_up={payload['sentiment']['limit_up_count']} "
         f"broken={payload['sentiment']['broken_limit_count']} "

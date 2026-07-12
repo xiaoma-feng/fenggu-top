@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="峰股top - A股涨停情绪数据中心" />
     <title>峰股top | A股涨停情绪数据中心</title>
-    <link rel="stylesheet" href="./src/styles.css?v=20260711-public-site" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260712-board-theme" />
   </head>
   <body>
     <div id="app" v-cloak>
@@ -122,7 +122,7 @@
             <strong>上市板块</strong>
             <label v-for="board in marketBoards" :key="board" class="check-chip">
               <input v-model="selectedBoards" type="checkbox" :value="board" />
-              <span>{{ board }}</span>
+              <span>{{ board }}（{{ limitUpBoardCounts[board] }}）</span>
             </label>
           </div>
           <div class="filter-group">
@@ -205,7 +205,7 @@
                       <td>{{ stock.latest_price || '--' }}</td>
                       <td>{{ stock.market_board || '--' }}</td>
                       <td>{{ stock.industry || '--' }}</td>
-                      <td>{{ stock.theme || '--' }}</td>
+                      <td class="theme-cell">{{ formatText(stock.theme) }}</td>
                       <td>{{ formatMoney(stock.float_market_cap) }}</td>
                       <td>{{ formatMoney(stock.total_market_cap) }}</td>
                       <td>{{ stock.first_limit_time || '--' }}</td>
@@ -261,16 +261,6 @@
               <p class="data-note">{{ themeNotice }}</p>
               <ol class="rank-list">
                 <li v-for="item in themeRank.slice(0, 8)" :key="item.name">
-                  <span>{{ item.name }}</span>
-                  <strong>{{ item.count }}只</strong>
-                </li>
-              </ol>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head"><h2>上市板块排行</h2></div>
-              <ol class="rank-list">
-                <li v-for="item in marketBoardRank" :key="item.name">
                   <span>{{ item.name }}</span>
                   <strong>{{ item.count }}只</strong>
                 </li>
@@ -354,7 +344,7 @@
 
     <div id="boot-status" role="status">页面加载中...</div>
 
-    <script src="./src/fallback-data.js?v=20260711-public-site"></script>
-    <script type="module" src="./src/app.js?v=20260711-public-site"></script>
+    <script src="./src/fallback-data.js?v=20260712-board-theme"></script>
+    <script type="module" src="./src/app.js?v=20260712-board-theme"></script>
   </body>
 </html>
