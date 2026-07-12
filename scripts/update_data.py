@@ -648,9 +648,19 @@ def date_range_back(day, days):
             yield current
 
 
-def build_limit_only_payload(trade_date, limit_ups, history, now, stats_lookback_days):
+def build_history_payload(
+    trade_date,
+    limit_ups,
+    broken_limits,
+    limit_downs,
+    history,
+    now,
+    stats_lookback_days,
+):
     stats = build_stats(limit_ups, trade_date, list(history)) if limit_ups else []
     highest_board = max([as_int(item.get("consecutive_days"), 1) for item in limit_ups] or [0])
+    broken_count = len(broken_limits)
+    total_for_rate = len(limit_ups) + broken_count
     return {
         "meta": {
             "site_name": "峰股top",
@@ -658,24 +668,25 @@ def build_limit_only_payload(trade_date, limit_ups, history, now, stats_lookback
             "updated_at": now.strftime("%Y-%m-%d %H:%M"),
             "market_data_ready_time": "15:30",
             "source": "akshare + eastmoney",
-            "data_status": "ok" if limit_ups else "empty_or_failed",
+            "data_status": "ok" if limit_ups or broken_limits or limit_downs else "empty_or_failed",
             "stats_lookback_days": stats_lookback_days,
             "history_scope_days": DEFAULT_HISTORY_DAYS,
+            "history_pools_complete": True,
             "notes": [
-                "历史日期主要用于查看每日涨停池，支持近 3 个月追溯。",
+                "历史日期包含每日涨停池、炸板池和跌停池，支持近 3 个月追溯。",
                 "题材来自东方财富核心题材接口，支持一只股票归属多个题材。",
             ],
         },
         "sentiment": {
             "limit_up_count": len(limit_ups),
-            "limit_down_count": 0,
-            "broken_limit_count": 0,
+            "limit_down_count": len(limit_downs),
+            "broken_limit_count": broken_count,
             "highest_board": highest_board,
             "first_board_count": sum(as_int(item.get("consecutive_days"), 1) == 1 for item in limit_ups),
             "multi_board_count": sum(as_int(item.get("consecutive_days"), 1) >= 2 for item in limit_ups),
             "limit_up_turnover_amount": sum(as_number(item.get("turnover_amount"), 0) for item in limit_ups),
             "limit_up_seal_amount": sum(as_number(item.get("seal_amount"), 0) for item in limit_ups),
-            "broken_rate": 0,
+            "broken_rate": round((broken_count / total_for_rate) * 100, 2) if total_for_rate else 0,
             "previous_trade_date": "",
             "yesterday_limit_up_count": 0,
             "promoted_count": 0,
@@ -688,8 +699,8 @@ def build_limit_only_payload(trade_date, limit_ups, history, now, stats_lookback
             "market_board_limit_rank": rank_by_field(limit_ups, "market_board"),
         },
         "limit_ups": limit_ups,
-        "broken_limits": [],
-        "limit_downs": [],
+        "broken_limits": broken_limits,
+        "limit_downs": limit_downs,
         "strong_stocks": [],
         "sub_new_stocks": [],
         "stats": stats,
@@ -743,8 +754,9 @@ def build_payload(
             "updated_at": now.strftime("%Y-%m-%d %H:%M"),
             "market_data_ready_time": "15:30",
             "source": "akshare + eastmoney",
-            "data_status": "ok" if limit_ups else "empty_or_failed",
+            "data_status": "ok" if limit_ups or broken_limits or limit_downs else "empty_or_failed",
             "stats_lookback_days": stats_lookback_days,
+            "history_pools_complete": True,
             "notes": [
                 "涨停池、炸板池、跌停池来自 AKShare 东方财富专题接口。",
                 "题材来自东方财富核心题材接口，支持一只股票归属多个题材。",
@@ -800,6 +812,15 @@ def write_payload(payload):
     return latest_path, history_path
 
 
+def load_complete_history_payload(path):
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    meta = payload.get("meta", {}) if isinstance(payload, dict) else {}
+    return payload if meta.get("history_pools_complete") is True else None
+
+
 def write_history_range(
     latest_payload,
     history_days=DEFAULT_HISTORY_DAYS,
@@ -819,9 +840,22 @@ def write_history_range(
         if trade_date == latest_payload["meta"]["trade_date"]:
             payload = latest_payload
         else:
-            limit_ups = fetch_limit_ups(day.strftime("%Y%m%d"))
-            enrich_limit_up_themes(limit_ups, theme_cache)
-            payload = build_limit_only_payload(trade_date, limit_ups, history, now, stats_lookback_days)
+            payload = load_complete_history_payload(history_path)
+            if payload is None:
+                ak_date = day.strftime("%Y%m%d")
+                limit_ups = fetch_limit_ups(ak_date)
+                enrich_limit_up_themes(limit_ups, theme_cache)
+                broken_limits = fetch_broken_limits(ak_date)
+                limit_downs = fetch_limit_downs(ak_date)
+                payload = build_history_payload(
+                    trade_date,
+                    limit_ups,
+                    broken_limits,
+                    limit_downs,
+                    history,
+                    now,
+                    stats_lookback_days,
+                )
         write_json(history_path, payload)
         written.append(history_path)
         time.sleep(0.03)

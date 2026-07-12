@@ -467,9 +467,9 @@ createApp({
     const statsByCode = computed(() => new Map(allStats.value.map((row) => [row.code, row])));
     const todayText = computed(() => shanghaiDateText());
     const minDateText = computed(() => addMonths(todayText.value, -dateRangeMonths));
-    const totalLimitUps = computed(() => numberValue(data.value.sentiment.limit_up_count, limitUps.value.length));
-    const brokenCount = computed(() => numberValue(data.value.sentiment.broken_limit_count, brokenWatch.value.length));
-    const downCount = computed(() => numberValue(data.value.sentiment.limit_down_count, limitDowns.value.length));
+    const totalLimitUps = computed(() => limitUps.value.length);
+    const brokenCount = computed(() => brokenWatch.value.length);
+    const downCount = computed(() => limitDowns.value.length);
     const isLatestClosedSession = computed(() => data.value.meta.trade_date && data.value.meta.trade_date !== todayText.value);
     const dataScopeText = computed(() => {
       if (realtimeStatus.value === "盘中实时") return `当前显示 ${todayText.value} 盘中实时数据，每 1 分钟自动刷新。`;
@@ -629,7 +629,7 @@ createApp({
     }
 
     function detailValue(value) {
-      return value === null || value === undefined || value === "" ? "数据积累中" : value;
+      return value === null || value === undefined || value === "" ? "--" : value;
     }
 
     function rowClass(stock, sectionKey) {
@@ -979,6 +979,7 @@ createApp({
       navItems,
       todayText,
       minDateText,
+      totalLimitUps,
       metricCards,
       dataScopeText,
       realtimeStatus,

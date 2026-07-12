@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="峰股top - A股涨停情绪数据中心" />
     <title>峰股top | A股涨停情绪数据中心</title>
-    <link rel="stylesheet" href="./src/styles.css?v=20260712-board-theme-r2" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260712-pools-columns" />
   </head>
   <body>
     <div id="app" v-cloak>
@@ -173,21 +173,18 @@
                       <th>涨幅</th>
                       <th>最新价</th>
                       <th>上市板块</th>
-                      <th>行业</th>
-                      <th>题材</th>
-                      <th>流通市值</th>
-                      <th>总市值</th>
                       <th>首次封板</th>
                       <th>最后封板</th>
                       <th>成交额</th>
                       <th>换手率</th>
                       <th>封单金额</th>
                       <th>连板</th>
-                      <th>炸板</th>
                       <th>
                         涨停统计
                         <span class="help-dot" :title="limitStatsHelp">?</span>
                       </th>
+                      <th>行业</th>
+                      <th>题材</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -204,21 +201,18 @@
                       <td :class="rowClass(stock, section.key)">{{ formatPercent(stock.change_pct) }}</td>
                       <td>{{ stock.latest_price || '--' }}</td>
                       <td>{{ stock.market_board || '--' }}</td>
-                      <td>{{ stock.industry || '--' }}</td>
-                      <td class="theme-cell">{{ formatText(stock.theme) }}</td>
-                      <td>{{ formatMoney(stock.float_market_cap) }}</td>
-                      <td>{{ formatMoney(stock.total_market_cap) }}</td>
                       <td>{{ stock.first_limit_time || '--' }}</td>
                       <td>{{ stock.last_limit_time || '--' }}</td>
                       <td>{{ formatMoney(stock.turnover_amount) }}</td>
                       <td>{{ formatPercent(stock.turnover_rate) }}</td>
                       <td>{{ formatMoney(stock.seal_amount) }}</td>
                       <td><span class="badge hot">{{ stock.consecutive_days || 1 }}</span></td>
-                      <td>{{ stock.open_times ?? 0 }}</td>
                       <td>{{ stock.limit_stats || '--' }}</td>
+                      <td>{{ stock.industry || '--' }}</td>
+                      <td class="theme-cell">{{ formatText(stock.theme) }}</td>
                     </tr>
                     <tr v-if="!section.rows.length">
-                      <td colspan="17" class="empty">暂无匹配数据</td>
+                      <td colspan="14" class="empty">暂无匹配数据</td>
                     </tr>
                   </tbody>
                 </table>
@@ -233,7 +227,7 @@
             <article class="panel">
               <div class="panel-head">
                 <h2>连板分布</h2>
-                <span>{{ data.sentiment.limit_up_count || 0 }} 只</span>
+                <span>{{ totalLimitUps }} 只</span>
               </div>
               <div class="bars">
                 <div v-for="item in boardDistribution" :key="item.label" class="bar-row">
@@ -344,7 +338,7 @@
 
     <div id="boot-status" role="status">页面加载中...</div>
 
-    <script src="./src/fallback-data.js?v=20260712-board-theme-r2"></script>
-    <script type="module" src="./src/app.js?v=20260712-board-theme-r2"></script>
+    <script src="./src/fallback-data.js?v=20260712-pools-columns"></script>
+    <script type="module" src="./src/app.js?v=20260712-pools-columns"></script>
   </body>
 </html>
