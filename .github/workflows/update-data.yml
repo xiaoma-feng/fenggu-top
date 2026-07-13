@@ -21,6 +21,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: update-market-data
@@ -62,3 +64,24 @@ jobs:
         with:
           commit_message: "chore: update market data"
           file_pattern: "data/*.json data/history/*.json"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: update-data
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
