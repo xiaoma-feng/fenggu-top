@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "峰股top",
     "trade_date": "2026-07-13",
-    "updated_at": "2026-07-13 19:42",
+    "updated_at": "2026-07-13 19:47",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -6393,7 +6393,7 @@
       "last_limit_time": "11:23:15",
       "board_turnover_amount": 136776911,
       "consecutive_days": 1,
-      "open_times": 16,
+      "open_times": 15,
       "concept": "通信技术、被动元件概念、商业航天、半导体概念、MLCC、小米概念、军民融合、5G概念、无人机、超级电容、核能核电、新材料、创投、军工",
       "industry": "军工电子",
       "limit_days_in_window": 0,
