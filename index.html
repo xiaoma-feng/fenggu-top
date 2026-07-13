@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="峰股top - A股涨停情绪数据中心" />
     <title>峰股top | A股涨停情绪数据中心</title>
-    <link rel="stylesheet" href="./src/styles.css?v=20260712-pools-columns" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260713-realtime-details" />
   </head>
   <body>
     <div id="app" v-cloak>
@@ -199,17 +199,17 @@
                         {{ stock.name }}
                       </td>
                       <td :class="rowClass(stock, section.key)">{{ formatPercent(stock.change_pct) }}</td>
-                      <td>{{ stock.latest_price || '--' }}</td>
-                      <td>{{ stock.market_board || '--' }}</td>
-                      <td>{{ stock.first_limit_time || '--' }}</td>
-                      <td>{{ stock.last_limit_time || '--' }}</td>
+                      <td>{{ priceText(stock.latest_price) }}</td>
+                      <td>{{ stock.market_board || '暂无数据' }}</td>
+                      <td>{{ timeCellText(stock, 'first_limit_time', section.key) }}</td>
+                      <td>{{ timeCellText(stock, 'last_limit_time', section.key) }}</td>
                       <td>{{ formatMoney(stock.turnover_amount) }}</td>
                       <td>{{ formatPercent(stock.turnover_rate) }}</td>
                       <td>{{ formatMoney(stock.seal_amount) }}</td>
                       <td><span class="badge hot">{{ stock.consecutive_days || 1 }}</span></td>
-                      <td>{{ stock.limit_stats || '--' }}</td>
-                      <td>{{ stock.industry || '--' }}</td>
-                      <td class="theme-cell">{{ formatText(stock.theme) }}</td>
+                      <td>{{ limitStatsText(stock) }}</td>
+                      <td>{{ stock.industry || '暂无行业数据' }}</td>
+                      <td class="theme-cell">{{ stock.theme || '暂无题材数据' }}</td>
                     </tr>
                     <tr v-if="!section.rows.length">
                       <td colspan="14" class="empty">暂无匹配数据</td>
@@ -296,7 +296,7 @@
             <strong>{{ hoveredStock.name }}</strong>
             <span>{{ hoveredStock.code }}</span>
           </div>
-          <p>{{ hoveredStock.industry || '--' }} / {{ hoveredStock.theme || '--' }} / {{ hoveredStock.market_board || '--' }}</p>
+          <p>{{ hoveredStock.industry || '暂无行业数据' }} / {{ hoveredStock.theme || '暂无题材数据' }} / {{ hoveredStock.market_board || '暂无上市板块' }}</p>
           <dl>
             <div><dt>流通市值</dt><dd>{{ formatMoney(hoveredStock.float_market_cap) }}</dd></div>
             <div><dt>总市值</dt><dd>{{ formatMoney(hoveredStock.total_market_cap) }}</dd></div>
@@ -309,6 +309,28 @@
             <div><dt>首次涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).first_limit_date) }}</dd></div>
             <div><dt>最近涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).last_limit_date) }}</dd></div>
           </dl>
+          <section class="intraday-card" aria-label="今日分时图">
+            <div class="intraday-head">
+              <strong>今日分时</strong>
+              <span v-if="intradayTrend" :class="intradayChart.changePct >= 0 ? 'up-text' : 'down-text'">
+                {{ priceText(intradayChart.lastPrice) }} / {{ formatPercent(intradayChart.changePct) }}
+              </span>
+            </div>
+            <div v-if="intradayLoading" class="intraday-state">分时数据加载中...</div>
+            <div v-else-if="intradayError" class="intraday-state">{{ intradayError }}</div>
+            <svg
+              v-else-if="intradayTrend"
+              class="intraday-chart"
+              :viewBox="`0 0 ${intradayChart.width} ${intradayChart.height}`"
+              role="img"
+              :aria-label="`${hoveredStock.name}今日分时图`"
+            >
+              <line x1="5" :x2="intradayChart.width - 5" :y1="intradayChart.baselineY" :y2="intradayChart.baselineY" class="trend-baseline" />
+              <polyline v-if="intradayChart.averagePoints" :points="intradayChart.averagePoints" class="trend-average" />
+              <polyline :points="intradayChart.points" class="trend-price" :style="{ stroke: intradayChart.color }" />
+            </svg>
+            <div v-if="intradayTrend" class="intraday-axis"><span>09:30</span><span>11:30 / 13:00</span><span>15:00</span></div>
+          </section>
         </div>
 
         <div v-if="feedbackModalOpen" class="modal-backdrop" @click.self="closeFeedbackModal">
@@ -338,7 +360,7 @@
 
     <div id="boot-status" role="status">页面加载中...</div>
 
-    <script src="./src/fallback-data.js?v=20260712-pools-columns"></script>
-    <script type="module" src="./src/app.js?v=20260712-pools-columns"></script>
+    <script src="./src/fallback-data.js?v=20260713-realtime-details"></script>
+    <script type="module" src="./src/app.js?v=20260713-realtime-details"></script>
   </body>
 </html>

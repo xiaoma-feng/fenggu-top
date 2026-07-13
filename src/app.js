@@ -1,4 +1,5 @@
 import { createApp, computed, ref, onMounted, onBeforeUnmount, nextTick } from "./vendor/vue.esm-browser.prod.js";
+import { fetchIntradayTrend, fetchRealtimePools } from "./eastmoney.js?v=20260713-realtime-details";
 
 const emptyData = {
   meta: {},
@@ -18,9 +19,10 @@ const feedbackRefreshMs = 30000;
 const feedbackStorageKey = "fenggu-feedbacks";
 const layoutKey = "fenggu-layout:";
 const themeNotice = "题材来自东方财富概念数据，仅供参考";
-const limitStatsHelp = "涨停统计格式为 N/M，表示近 M 个交易日内涨停 N 次，例如 6/6 表示近 6 个交易日涨停 6 次。";
+const limitStatsHelp = "涨停统计格式为 N/M，表示统计周期 N 天内涨停 M 次；0/0 表示没有涨停记录。";
 const dateRangeMonths = 3;
 let holidaysCache = null;
+const cachedThemesByCode = new Map();
 const themeSeparators = /[，,；;、|/\n\r]+/;
 const ignoredThemes = new Set(["", "-", "--", "其他", "未知", "暂无", "暂无题材", "无", "null", "none", "nan"]);
 
@@ -62,7 +64,22 @@ function normalizeThemes(values) {
 
 function stockThemes(stock) {
   const savedThemes = normalizeThemes(stock?.themes);
-  return savedThemes.length ? savedThemes : normalizeThemes([stock?.concept, stock?.theme]);
+  if (savedThemes.length) return savedThemes;
+  const inlineThemes = normalizeThemes([stock?.concept, stock?.theme]);
+  return inlineThemes.length ? inlineThemes : (cachedThemesByCode.get(String(stock?.code || "").padStart(6, "0")) || []);
+}
+
+async function loadThemeProfiles() {
+  try {
+    const response = await fetch("./data/eastmoney-theme-cache.json", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const payload = await response.json();
+    for (const [code, profile] of Object.entries(payload?.stocks || {})) {
+      cachedThemesByCode.set(String(code).padStart(6, "0"), normalizeThemes(profile?.themes));
+    }
+  } catch (error) {
+    console.warn("题材缓存加载失败", error);
+  }
 }
 
 function normalizeIndustry(value) {
@@ -200,12 +217,16 @@ function shanghaiMinutes(date = new Date()) {
 function marketPhase() {
   const minutes = shanghaiMinutes();
   if ((minutes >= 570 && minutes < 690) || (minutes >= 780 && minutes < 900)) return "intraday";
+  if (minutes >= 690 && minutes < 780) return "midday";
   if (minutes >= 900 && minutes < 930) return "settling";
+  if (minutes < 570) return "preopen";
   return "closed";
 }
 
 function shouldUseLocalFeedback() {
-  return window.location.protocol === "file:" || window.location.hostname.endsWith("github.io");
+  return window.location.protocol === "file:"
+    || window.location.hostname.endsWith("github.io")
+    || ["localhost", "127.0.0.1"].includes(window.location.hostname);
 }
 
 createApp({
@@ -229,6 +250,9 @@ createApp({
     const lastRefreshAt = ref("");
     const hoveredStock = ref(null);
     const popoverStyle = ref({});
+    const intradayTrend = ref(null);
+    const intradayLoading = ref(false);
+    const intradayError = ref("");
     const panelSizes = ref({});
     const feedbackItems = ref([]);
     const feedbackError = ref("");
@@ -241,6 +265,8 @@ createApp({
     let refreshTimer = null;
     let feedbackTimer = null;
     let observer = null;
+    const cachedStatsByCode = new Map();
+    const intradayCache = new Map();
 
     function setUrlDate(date) {
       if (window.location.protocol === "file:" || !date) return;
@@ -290,6 +316,13 @@ createApp({
       feedbackItems.value = (rows || []).filter(Boolean).slice(0, 50);
     }
 
+    function cachePayloadDetails(payload) {
+      for (const row of payload?.stats || []) {
+        const code = String(row?.code || "").padStart(6, "0");
+        if (code) cachedStatsByCode.set(code, { ...(cachedStatsByCode.get(code) || {}), ...row, code });
+      }
+    }
+
     function normalizePayload(payload) {
       const normalized = {
         ...emptyData,
@@ -308,6 +341,7 @@ createApp({
     }
 
     function updateData(payload) {
+      cachePayloadDetails(payload);
       data.value = normalizePayload(payload);
       selectedDate.value = data.value.meta.trade_date || selectedDate.value;
       lastRefreshAt.value = new Date().toLocaleTimeString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false });
@@ -320,6 +354,7 @@ createApp({
         return;
       }
       const payload = await fetchJson("./data/latest.json");
+      cachePayloadDetails(payload);
       const today = shanghaiDateText();
       if (payload?.meta?.trade_date === today) {
         updateData(payload);
@@ -336,19 +371,19 @@ createApp({
       if (window.location.protocol === "file:" || refreshPaused.value) return;
       if (historicalDateLocked.value) return;
       try {
-        const today = shanghaiDateText().replaceAll("-", "");
-        const payload = await fetchJson(`./api/realtime?date=${today}`);
+        const today = shanghaiDateText();
+        const payload = await fetchRealtimePools(today);
         updateData({
-          ...todayEmptyPayload(shanghaiDateText(), "intraday"),
+          ...todayEmptyPayload(today, "intraday"),
           ...payload,
           meta: {
-            ...todayEmptyPayload(shanghaiDateText(), "intraday").meta,
+            ...todayEmptyPayload(today, "intraday").meta,
             ...(payload.meta || {}),
-            trade_date: shanghaiDateText(),
+            trade_date: today,
             data_status: payload.meta?.data_status || "intraday",
           },
           sentiment: {
-            ...todayEmptyPayload(shanghaiDateText(), "intraday").sentiment,
+            ...todayEmptyPayload(today, "intraday").sentiment,
             ...(payload.sentiment || {}),
             limit_up_count: (payload.limit_ups || []).length,
             broken_limit_count: (payload.broken_limits || []).length,
@@ -357,14 +392,19 @@ createApp({
           limit_ups: payload.limit_ups || [],
           broken_limits: payload.broken_limits || [],
           limit_downs: payload.limit_downs || [],
+          stats: [...cachedStatsByCode.values()],
         });
         realtimeStatus.value = marketPhase() === "settling" ? "等待收盘固化" : "盘中实时";
         loadError.value = "";
       } catch (error) {
         if (marketPhase() === "intraday") {
           const today = shanghaiDateText();
-          updateData(todayEmptyPayload(today, "realtime_unavailable"));
-          loadError.value = "实时接口暂时不可用，当前显示今日空数据，不使用前一交易日数据冒充。";
+          const hasCurrentSnapshot = data.value.meta.trade_date === today
+            && ((data.value.limit_ups || []).length || (data.value.broken_limits || []).length || (data.value.limit_downs || []).length);
+          if (!hasCurrentSnapshot) updateData(todayEmptyPayload(today, "realtime_unavailable"));
+          loadError.value = hasCurrentSnapshot
+            ? "实时接口暂时不可用，已保留上一份盘中数据，下一分钟自动重试。"
+            : "实时接口暂时不可用，当前显示今日空数据，下一分钟自动重试。";
           realtimeStatus.value = "实时接口不可用";
         }
         console.warn(error);
@@ -381,6 +421,18 @@ createApp({
       if (phase === "settling" && !historicalDateLocked.value) {
         if (data.value.meta.trade_date !== today) updateData(todayEmptyPayload(today, "settling"));
         realtimeStatus.value = "等待收盘固化";
+        return;
+      }
+      if (phase === "midday" && !historicalDateLocked.value) {
+        realtimeStatus.value = "午间暂停刷新";
+        return;
+      }
+      if (phase === "preopen" && !historicalDateLocked.value) {
+        if (data.value.meta.trade_date !== today || data.value.meta.data_status !== "waiting_open") {
+          updateData(todayEmptyPayload(today, "waiting_open"));
+        }
+        realtimeStatus.value = "等待开盘";
+        loadError.value = "";
         return;
       }
       if (!historicalDateLocked.value && (!selectedDate.value || selectedDate.value === today || data.value.meta.trade_date !== today)) {
@@ -464,7 +516,7 @@ createApp({
     const brokenWatch = computed(() => (data.value.broken_limits || []).map(normalizeStock));
     const limitDowns = computed(() => (data.value.limit_downs || []).map(normalizeStock));
     const allStats = computed(() => data.value.stats || []);
-    const statsByCode = computed(() => new Map(allStats.value.map((row) => [row.code, row])));
+    const statsByCode = computed(() => new Map(allStats.value.map((row) => [String(row.code || "").padStart(6, "0"), row])));
     const todayText = computed(() => shanghaiDateText());
     const minDateText = computed(() => addMonths(todayText.value, -dateRangeMonths));
     const totalLimitUps = computed(() => limitUps.value.length);
@@ -473,7 +525,9 @@ createApp({
     const isLatestClosedSession = computed(() => data.value.meta.trade_date && data.value.meta.trade_date !== todayText.value);
     const dataScopeText = computed(() => {
       if (realtimeStatus.value === "盘中实时") return `当前显示 ${todayText.value} 盘中实时数据，每 1 分钟自动刷新。`;
-      if (realtimeStatus.value === "实时接口不可用") return `当前显示 ${todayText.value} 今日空数据，实时接口恢复后会继续按 1 分钟刷新。`;
+      if (realtimeStatus.value === "实时接口不可用") return `当前显示 ${todayText.value} 最近一次可用盘中数据，接口恢复后继续按 1 分钟刷新。`;
+      if (realtimeStatus.value === "午间暂停刷新") return `当前保留 ${todayText.value} 上午收盘数据，13:00 后恢复每 1 分钟刷新。`;
+      if (realtimeStatus.value === "等待开盘") return `当前显示 ${todayText.value} 今日空数据，09:30 开盘后开始实时更新。`;
       if (realtimeStatus.value === "等待收盘固化") return `当前显示 ${todayText.value} 最后一份盘中数据，15:30 后切换收盘锁定。`;
       if (realtimeStatus.value === "历史数据") return `当前显示历史交易日 ${data.value.meta.trade_date}，可在日期框切换任意历史日期。`;
       if (realtimeStatus.value === "当天非交易日") return `当前选择 ${data.value.meta.trade_date}，当天非交易日，无数据。`;
@@ -608,9 +662,45 @@ createApp({
       { label: "历史统计", count: allStats.value.length, ok: allStats.value.length > 0 },
     ]);
 
+    const intradayChart = computed(() => {
+      const source = intradayTrend.value;
+      const width = 350;
+      const height = 112;
+      const padding = 5;
+      if (!source?.points?.length) return { points: "", averagePoints: "", baselineY: height / 2, changePct: 0, color: "#ff4058", width, height };
+      const prices = source.points.flatMap((point) => [point.price, point.average]).filter((value) => value > 0);
+      if (source.preClose > 0) prices.push(source.preClose);
+      let min = Math.min(...prices);
+      let max = Math.max(...prices);
+      const paddingValue = Math.max((max - min) * 0.08, max * 0.002);
+      min -= paddingValue;
+      max += paddingValue;
+      const span = Math.max(max - min, 0.01);
+      const xAt = (index) => padding + (index / Math.max(source.points.length - 1, 1)) * (width - padding * 2);
+      const yAt = (value) => padding + ((max - value) / span) * (height - padding * 2);
+      const points = source.points.map((point, index) => `${xAt(index).toFixed(1)},${yAt(point.price).toFixed(1)}`).join(" ");
+      const averagePoints = source.points.filter((point) => point.average > 0)
+        .map((point, index) => `${xAt(index).toFixed(1)},${yAt(point.average).toFixed(1)}`).join(" ");
+      const lastPrice = source.points[source.points.length - 1].price;
+      const changePct = source.preClose > 0 ? ((lastPrice - source.preClose) / source.preClose) * 100 : 0;
+      return {
+        points,
+        averagePoints,
+        baselineY: yAt(source.preClose || lastPrice),
+        changePct,
+        lastPrice,
+        min,
+        max,
+        color: changePct >= 0 ? "#ff5268" : "#2fd18b",
+        width,
+        height,
+      };
+    });
+
     function formatMoney(value) {
+      if (value === null || value === undefined || value === "") return "暂无数据";
       const amount = numberValue(value);
-      if (!amount) return "--";
+      if (!amount) return "0";
       if (amount >= 100000000) return `${(amount / 100000000).toFixed(2)}亿`;
       if (amount >= 10000) return `${(amount / 10000).toFixed(0)}万`;
       return String(amount);
@@ -621,15 +711,52 @@ createApp({
     }
 
     function formatText(value) {
-      return value === null || value === undefined || value === "" ? "--" : value;
+      return value === null || value === undefined || value === "" ? "暂无数据" : value;
     }
 
     function stockStats(stock) {
-      return statsByCode.value.get(stock.code) || {};
+      const code = String(stock?.code || "").padStart(6, "0");
+      const source = statsByCode.value.get(code) || cachedStatsByCode.get(code) || {};
+      const isBrokenToday = brokenWatch.value.some((item) => item.code === code);
+      return {
+        total_limit_count: 0,
+        broken_count_total: isBrokenToday ? 1 : 0,
+        max_consecutive_days: 0,
+        limit_count_7d: 0,
+        limit_count_30d: 0,
+        limit_count_ytd: 0,
+        limit_count_1y: 0,
+        limit_count_3y: 0,
+        first_limit_date: "暂无记录",
+        last_limit_date: "暂无记录",
+        ...source,
+        broken_count_total: Math.max(numberValue(source.broken_count_total), isBrokenToday ? 1 : 0),
+        first_limit_date: source.first_limit_date || "暂无记录",
+        last_limit_date: source.last_limit_date || "暂无记录",
+      };
     }
 
     function detailValue(value) {
-      return value === null || value === undefined || value === "" ? "--" : value;
+      return value === null || value === undefined || value === "" ? "暂无记录" : value;
+    }
+
+    function limitStatsText(stock) {
+      const source = String(stock?.limit_stats || "").trim();
+      if (source && source !== "--") return source;
+      const stats = stockStats(stock);
+      if (!numberValue(stats.total_limit_count)) return "0/0";
+      return `30/${numberValue(stats.limit_count_30d)}`;
+    }
+
+    function timeCellText(stock, field, sectionKey) {
+      if (stock?.[field]) return stock[field];
+      if (sectionKey === "broken" && field === "last_limit_time") return "未封住";
+      if (sectionKey === "down" && field === "first_limit_time") return "数据源未提供";
+      return "暂无记录";
+    }
+
+    function priceText(value) {
+      return value === null || value === undefined || value === "" ? "暂无数据" : numberValue(value).toFixed(2);
     }
 
     function rowClass(stock, sectionKey) {
@@ -752,11 +879,39 @@ createApp({
       window.addEventListener("blur", onUp);
     }
 
+    async function loadStockIntraday(code) {
+      if (intradayCache.has(code)) {
+        intradayTrend.value = intradayCache.get(code);
+        intradayLoading.value = false;
+        intradayError.value = "";
+        return;
+      }
+      intradayLoading.value = true;
+      intradayError.value = "";
+      try {
+        const trend = await fetchIntradayTrend(code);
+        intradayCache.set(code, trend);
+        if (hoveredStock.value?.code === code) intradayTrend.value = trend;
+      } catch (error) {
+        if (hoveredStock.value?.code === code) intradayError.value = "暂无今日分时数据";
+        console.warn(error);
+      } finally {
+        if (hoveredStock.value?.code === code) intradayLoading.value = false;
+      }
+    }
+
     function showStockPopover(stock, event) {
-      hoveredStock.value = normalizeStock(stock);
-      const x = Math.min(event.clientX + 14, window.innerWidth - 340);
-      const y = Math.min(event.clientY + 14, window.innerHeight - 360);
+      const normalized = normalizeStock(stock);
+      const changed = hoveredStock.value?.code !== normalized.code;
+      hoveredStock.value = normalized;
+      const x = Math.min(event.clientX + 14, window.innerWidth - 394);
+      const y = Math.min(event.clientY + 14, window.innerHeight - 570);
       popoverStyle.value = { left: `${Math.max(12, x)}px`, top: `${Math.max(12, y)}px` };
+      if (changed) {
+        intradayTrend.value = null;
+        intradayError.value = "";
+        loadStockIntraday(normalized.code);
+      }
     }
 
     function hideStockPopover() {
@@ -952,6 +1107,7 @@ createApp({
 
     onMounted(async () => {
       loadPanelSizes();
+      await loadThemeProfiles();
       await loadData();
       await loadFeedbacks();
       await nextTick();
@@ -997,6 +1153,10 @@ createApp({
       themeRank,
       hoveredStock,
       popoverStyle,
+      intradayTrend,
+      intradayChart,
+      intradayLoading,
+      intradayError,
       feedbackItems,
       feedbackError,
       feedbackNotice,
@@ -1010,6 +1170,9 @@ createApp({
       formatFeedbackTime,
       stockStats,
       detailValue,
+      limitStatsText,
+      timeCellText,
+      priceText,
       rowClass,
       clearFilters,
       setSort,

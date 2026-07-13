@@ -238,11 +238,22 @@ def fetch_eastmoney_core_themes(code):
             boards = payload.get("ssbk") if isinstance(payload, dict) else None
             if not isinstance(boards, list):
                 return None
-            return normalize_theme_values([
+            precise = normalize_theme_values([
                 item.get("BOARD_NAME")
                 for item in boards
                 if as_text(item.get("IS_PRECISE")) == "1"
             ])
+            if precise:
+                return precise
+            fallback = []
+            ignored_fragments = ("昨日涨停", "昨日连板", "最近多板", "东方财富热股", "融资融券")
+            for item in boards:
+                name = as_text(item.get("BOARD_NAME"))
+                rank = as_int(item.get("BOARD_RANK"), 999)
+                if rank <= 3 or name.endswith("板块") or any(fragment in name for fragment in ignored_fragments):
+                    continue
+                fallback.append(name)
+            return normalize_theme_values(fallback)
         except (requests.RequestException, ValueError):
             if attempt < 2:
                 time.sleep(0.5 * (attempt + 1))
@@ -293,7 +304,7 @@ def resolve_eastmoney_themes(codes, cache, refresh_current=False):
             as_text(name).startswith("<generator object")
             for name in (raw_entry_themes if isinstance(raw_entry_themes, list) else [raw_entry_themes])
         )
-        if entry is not None and cache_is_valid and (not refresh_current or is_current):
+        if entry is not None and cache_is_valid and entry_themes and (not refresh_current or is_current):
             resolved[code] = entry_themes
         else:
             to_fetch.append(code)
@@ -324,7 +335,7 @@ def resolve_eastmoney_themes(codes, cache, refresh_current=False):
     return resolved
 
 
-def enrich_limit_up_themes(rows, cache, refresh_current=False):
+def enrich_stock_themes(rows, cache, refresh_current=False):
     themes_by_code = resolve_eastmoney_themes(
         [row.get("code") for row in rows],
         cache,
@@ -428,7 +439,11 @@ def fetch_limit_downs(trade_date):
                 "board_turnover_amount": as_number(pick(row, ["板上成交额"], 0)),
                 "consecutive_days": as_int(pick(row, ["连续跌停"], 0)),
                 "open_times": as_int(pick(row, ["开板次数"], 0)),
+                "concept": as_text(pick(row, ["所属概念", "概念"], "")),
                 "industry": as_text(pick(row, ["所属行业", "行业"], "")),
+                "limit_days_in_window": 0,
+                "limit_days_window": 0,
+                "limit_stats": "0/0",
         }
         record["market_board"] = infer_market_board(record["code"])
         set_record_themes(record, record.get("concept"))
@@ -542,7 +557,21 @@ def merge_history_records(*groups):
 
 
 def build_history_snapshot(trade_date, lookback_days=DEFAULT_STATS_LOOKBACK_DAYS):
-    return merge_history_records(load_history(), fetch_history_records(trade_date, lookback_days))
+    cutoff = datetime.strptime(trade_date, "%Y-%m-%d").date()
+    earliest = cutoff - timedelta(days=lookback_days)
+    return [
+        item
+        for item in merge_history_records(load_history())
+        if earliest <= datetime.strptime(item["trade_date"], "%Y-%m-%d").date() <= cutoff
+    ]
+
+
+def load_cached_stats():
+    try:
+        payload = json.loads((DATA_DIR / "latest.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    return payload.get("stats", []) if isinstance(payload.get("stats"), list) else []
 
 
 def previous_limit_session(history, trade_date):
@@ -578,7 +607,33 @@ def promotion_summary(limit_ups, history, trade_date):
     }
 
 
-def build_stats(limit_ups, trade_date, history):
+def broken_history_index(trade_date, current_broken_limits):
+    dates_by_code = {}
+    for path in HISTORY_DIR.glob("*.json"):
+        if path.stem > trade_date:
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for stock in payload.get("broken_limits", []):
+            code = as_text(stock.get("code")).zfill(6)
+            if code:
+                dates_by_code.setdefault(code, set()).add(path.stem)
+    for stock in current_broken_limits:
+        code = as_text(stock.get("code")).zfill(6)
+        if code:
+            dates_by_code.setdefault(code, set()).add(trade_date)
+    return {
+        code: {"count": len(dates), "last_date": max(dates, default="")}
+        for code, dates in dates_by_code.items()
+    }
+
+
+def build_stats(limit_ups, trade_date, history, visible_stocks=None, broken_limits=None, cached_stats=None):
+    visible_stocks = visible_stocks or limit_ups
+    broken_limits = broken_limits or []
+    cached_stats = cached_stats or []
     existing_keys = {(item["trade_date"], item["code"]) for item in history}
     for stock in limit_ups:
         key = (trade_date, stock["code"])
@@ -593,37 +648,74 @@ def build_stats(limit_ups, trade_date, history):
             )
 
     target_date = datetime.strptime(trade_date, "%Y-%m-%d").date()
-    latest_names = {stock["code"]: stock["name"] for stock in limit_ups}
-    latest_meta = {stock["code"]: stock for stock in limit_ups}
+    latest_names = {stock["code"]: stock["name"] for stock in visible_stocks}
+    latest_meta = {stock["code"]: stock for stock in visible_stocks}
+    limit_up_codes = {stock["code"] for stock in limit_ups}
+    current_broken_codes = {stock["code"] for stock in broken_limits}
+    broken_history = broken_history_index(trade_date, broken_limits)
+    cached_by_code = {as_text(item.get("code")).zfill(6): item for item in cached_stats}
     stats = []
-    for code in sorted({item["code"] for item in history} | set(latest_names)):
-        rows = [item for item in history if item["code"] == code]
+    all_codes = {item["code"] for item in history} | set(latest_names) | set(cached_by_code)
+    for code in sorted(all_codes):
+        rows = [item for item in history if item["code"] == code and item["trade_date"] <= trade_date]
         dates = [datetime.strptime(item["trade_date"], "%Y-%m-%d").date() for item in rows]
-        if not rows:
-            continue
-        last_row = max(rows, key=lambda item: item["trade_date"])
+        last_row = max(rows, key=lambda item: item["trade_date"]) if rows else {}
         latest = latest_meta.get(code, {})
+        cached = cached_by_code.get(code, {})
+        cached_last_limit = as_text(cached.get("last_limit_date"))
+        is_new_limit = code in limit_up_codes and (not cached_last_limit or trade_date > cached_last_limit)
+        cached_last_broken = as_text(cached.get("last_broken_date"))
+        is_new_broken = code in current_broken_codes and (not cached_last_broken or trade_date > cached_last_broken)
+        local_7d = sum(day >= target_date - timedelta(days=7) for day in dates)
+        local_30d = sum(day >= target_date - timedelta(days=30) for day in dates)
+        local_1y = sum(day >= target_date - timedelta(days=365) for day in dates)
+        local_ytd = sum(day.year == target_date.year for day in dates)
+        local_3y = sum(day >= target_date - timedelta(days=365 * 3) for day in dates)
+        local_total = len(rows)
+        local_broken = broken_history.get(code, {"count": 0, "last_date": ""})
+        first_candidates = [value for value in [as_text(cached.get("first_limit_date")), min([item["trade_date"] for item in rows], default="")] if value]
+        last_candidates = [value for value in [cached_last_limit, max([item["trade_date"] for item in rows], default="")] if value]
         stats.append(
             {
                 "code": code,
-                "name": latest_names.get(code) or last_row.get("name") or "",
-                "industry": latest.get("industry", ""),
-                "theme": latest.get("theme", ""),
+                "name": latest_names.get(code) or cached.get("name") or last_row.get("name") or "",
+                "industry": latest.get("industry") or cached.get("industry") or "",
+                "theme": latest.get("theme") or cached.get("theme") or "",
                 "market_board": infer_market_board(code),
-                "limit_count_7d": sum(day >= target_date - timedelta(days=7) for day in dates),
-                "limit_count_30d": sum(day >= target_date - timedelta(days=30) for day in dates),
-                "limit_count_1y": sum(day >= target_date - timedelta(days=365) for day in dates),
-                "limit_count_ytd": sum(day.year == target_date.year for day in dates),
-                "limit_count_3y": sum(day >= target_date - timedelta(days=365 * 3) for day in dates),
-                "total_limit_count": len(rows),
-                "max_consecutive_days": max([as_int(item.get("consecutive_days"), 1) for item in rows] or [1]),
-                "last_limit_date": max([item["trade_date"] for item in rows], default=trade_date),
-                "first_limit_date": min([item["trade_date"] for item in rows], default=trade_date),
-                "broken_count_total": None,
-                "is_limit_today": code in latest_names,
+                "limit_count_7d": local_7d,
+                "limit_count_30d": local_30d,
+                "limit_count_1y": max(local_1y, as_int(cached.get("limit_count_1y")) + (1 if is_new_limit else 0)),
+                "limit_count_ytd": max(local_ytd, as_int(cached.get("limit_count_ytd")) + (1 if is_new_limit else 0)),
+                "limit_count_3y": max(local_3y, as_int(cached.get("limit_count_3y")) + (1 if is_new_limit else 0)),
+                "total_limit_count": max(local_total, as_int(cached.get("total_limit_count")) + (1 if is_new_limit else 0)),
+                "max_consecutive_days": max(
+                    [as_int(item.get("consecutive_days"), 1) for item in rows]
+                    + [as_int(cached.get("max_consecutive_days")), as_int(latest.get("consecutive_days"))]
+                ),
+                "last_limit_date": max(last_candidates, default=""),
+                "first_limit_date": min(first_candidates, default=""),
+                "broken_count_total": max(
+                    as_int(local_broken.get("count")),
+                    as_int(cached.get("broken_count_total")) + (1 if is_new_broken else 0),
+                ),
+                "last_broken_date": max(as_text(local_broken.get("last_date")), cached_last_broken),
+                "is_limit_today": code in limit_up_codes,
             }
         )
     return sorted(stats, key=lambda item: (item["limit_count_30d"], item["limit_count_1y"]), reverse=True)
+
+
+def apply_stats_to_stocks(rows, stats):
+    stats_by_code = {as_text(item.get("code")).zfill(6): item for item in stats}
+    for stock in rows:
+        stat = stats_by_code.get(as_text(stock.get("code")).zfill(6), {})
+        total = as_int(stat.get("total_limit_count"), 0)
+        recent = as_int(stat.get("limit_count_30d"), 0)
+        source_value = as_text(stock.get("limit_stats"))
+        if not source_value or (source_value == "0/0" and total > 0):
+            stock["limit_stats"] = "0/0" if total == 0 else f"30/{recent}"
+        stock.setdefault("limit_days_in_window", 0)
+        stock.setdefault("limit_days_window", 0)
 
 
 def rank_by_field(rows, field, top_n=12):
@@ -657,7 +749,15 @@ def build_history_payload(
     now,
     stats_lookback_days,
 ):
-    stats = build_stats(limit_ups, trade_date, list(history)) if limit_ups else []
+    visible_stocks = [*limit_ups, *broken_limits, *limit_downs]
+    stats = build_stats(
+        limit_ups,
+        trade_date,
+        list(history),
+        visible_stocks=visible_stocks,
+        broken_limits=broken_limits,
+    )
+    apply_stats_to_stocks(visible_stocks, stats)
     highest_board = max([as_int(item.get("consecutive_days"), 1) for item in limit_ups] or [0])
     broken_count = len(broken_limits)
     total_for_rate = len(limit_ups) + broken_count
@@ -729,16 +829,25 @@ def build_payload(
     theme_cache = theme_cache if theme_cache is not None else load_theme_cache()
 
     limit_ups = fetch_limit_ups(ak_date)
-    enrich_limit_up_themes(limit_ups, theme_cache, refresh_current=True)
     broken_limits = fetch_broken_limits(ak_date)
     limit_downs = fetch_limit_downs(ak_date)
+    visible_stocks = [*limit_ups, *broken_limits, *limit_downs]
+    enrich_stock_themes(visible_stocks, theme_cache, refresh_current=True)
     strong_stocks = fetch_strong_stocks(ak_date)
     sub_new_stocks = fetch_sub_new_stocks(ak_date)
     highest_board = max([as_int(item.get("consecutive_days"), 1) for item in limit_ups] or [0])
     broken_count = len(broken_limits)
     total_for_rate = len(limit_ups) + broken_count
-    history = build_history_snapshot(trade_date, stats_lookback_days) if limit_ups else []
-    stats = build_stats(limit_ups, trade_date, history) if limit_ups else []
+    history = build_history_snapshot(trade_date, stats_lookback_days) if visible_stocks else []
+    stats = build_stats(
+        limit_ups,
+        trade_date,
+        history,
+        visible_stocks=visible_stocks,
+        broken_limits=broken_limits,
+        cached_stats=load_cached_stats(),
+    )
+    apply_stats_to_stocks(visible_stocks, stats)
     promotion = promotion_summary(limit_ups, history, trade_date) if limit_ups else {
         "previous_trade_date": "",
         "yesterday_limit_up_count": 0,
@@ -844,9 +953,9 @@ def write_history_range(
             if payload is None:
                 ak_date = day.strftime("%Y%m%d")
                 limit_ups = fetch_limit_ups(ak_date)
-                enrich_limit_up_themes(limit_ups, theme_cache)
                 broken_limits = fetch_broken_limits(ak_date)
                 limit_downs = fetch_limit_downs(ak_date)
+                enrich_stock_themes([*limit_ups, *broken_limits, *limit_downs], theme_cache)
                 payload = build_history_payload(
                     trade_date,
                     limit_ups,
@@ -879,17 +988,31 @@ def refresh_saved_theme_data():
             payloads.append((path, payload))
 
     cache = load_theme_cache()
-    all_limit_ups = [stock for _, payload in payloads for stock in payload.get("limit_ups", [])]
-    enrich_limit_up_themes(all_limit_ups, cache)
+    all_stocks = [
+        stock
+        for _, payload in payloads
+        for pool in ("limit_ups", "broken_limits", "limit_downs")
+        for stock in payload.get(pool, [])
+    ]
+    enrich_stock_themes(all_stocks, cache)
 
     latest_path = DATA_DIR / "latest.json"
     for path, payload in payloads:
         if path == latest_path:
-            enrich_limit_up_themes(payload["limit_ups"], cache, refresh_current=True)
+            enrich_stock_themes(
+                [
+                    *payload.get("limit_ups", []),
+                    *payload.get("broken_limits", []),
+                    *payload.get("limit_downs", []),
+                ],
+                cache,
+                refresh_current=True,
+            )
 
         themes_by_code = {
             as_text(stock.get("code")).zfill(6): normalize_theme_values(stock.get("themes"))
-            for stock in payload.get("limit_ups", [])
+            for pool in ("limit_ups", "broken_limits", "limit_downs")
+            for stock in payload.get(pool, [])
         }
         for stat in payload.get("stats", []):
             themes = themes_by_code.get(as_text(stat.get("code")).zfill(6), [])
@@ -906,7 +1029,7 @@ def refresh_saved_theme_data():
         write_json(path, payload)
 
     save_theme_cache(cache)
-    print(f"refreshed themes for {len(payloads)} payloads and {len(all_limit_ups)} limit-up rows")
+    print(f"refreshed themes for {len(payloads)} payloads and {len(all_stocks)} stock rows")
 
 
 def main():

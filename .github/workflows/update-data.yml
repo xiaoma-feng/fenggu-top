@@ -52,7 +52,7 @@ jobs:
           if [ -n "${{ github.event.inputs.stats_lookback_days }}" ]; then
             ARGS="$ARGS --stats-lookback-days ${{ github.event.inputs.stats_lookback_days }}"
           fi
-          python scripts/update_data.py $ARGS
+          python scripts/update_data.py $ARGS --no-history-range
 
       - name: Validate data
         run: python scripts/validate_data.py

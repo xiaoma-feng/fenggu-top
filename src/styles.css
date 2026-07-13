@@ -839,10 +839,11 @@ td {
   border: 1px solid rgba(126, 151, 190, 0.28);
   border-radius: 8px;
   box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
-  max-width: 330px;
+  max-width: calc(100vw - 24px);
   padding: 14px;
   pointer-events: none;
   position: fixed;
+  width: 380px;
   z-index: 50;
 }
 
@@ -872,6 +873,74 @@ td {
 
 .stock-popover dd {
   font-size: 14px;
+}
+
+.intraday-card {
+  border-top: 1px solid rgba(126, 151, 190, 0.18);
+  margin-top: 12px;
+  padding-top: 10px;
+}
+
+.intraday-head,
+.intraday-axis {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.intraday-head strong {
+  font-size: 13px;
+}
+
+.intraday-head span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.intraday-chart,
+.intraday-state {
+  background: rgba(3, 8, 18, 0.72);
+  border: 1px solid rgba(126, 151, 190, 0.12);
+  display: block;
+  height: 112px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.intraday-state {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: 12px;
+  justify-content: center;
+}
+
+.trend-baseline {
+  stroke: rgba(145, 160, 184, 0.42);
+  stroke-dasharray: 4 4;
+  stroke-width: 1;
+}
+
+.trend-average,
+.trend-price {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trend-average {
+  stroke: #f5b642;
+  stroke-width: 1;
+}
+
+.trend-price {
+  stroke-width: 1.6;
+}
+
+.intraday-axis {
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 4px;
 }
 
 .rank-list {

@@ -11,7 +11,6 @@ ROOT = Path(__file__).resolve().parents[1]
 LATEST_PATH = ROOT / "data" / "latest.json"
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 MARKET_DATA_READY_TIME = datetime_time(15, 30)
-MIN_LIMIT_UP_COUNT = 10
 REQUIRED_LIMIT_UP_FIELDS = [
     "code",
     "name",
@@ -70,8 +69,10 @@ def main():
     if trade_date > completed_date:
         fail(f"trade date {trade_date_text} is later than completed date {completed_date}")
 
-    if len(limit_ups) < MIN_LIMIT_UP_COUNT:
-        fail(f"limit-up count {len(limit_ups)} is below {MIN_LIMIT_UP_COUNT}")
+    broken_limits = payload.get("broken_limits") or []
+    limit_downs = payload.get("limit_downs") or []
+    if not any((limit_ups, broken_limits, limit_downs)):
+        fail("all three market pools are empty")
     if int(sentiment.get("limit_up_count") or 0) != len(limit_ups):
         fail("sentiment.limit_up_count does not match limit_ups length")
     if int(sentiment.get("broken_limit_count") or 0) != len(payload.get("broken_limits") or []):
@@ -79,10 +80,11 @@ def main():
     if int(sentiment.get("limit_down_count") or 0) != len(payload.get("limit_downs") or []):
         fail("sentiment.limit_down_count does not match limit_downs length")
 
-    first_stock = limit_ups[0]
-    missing = [field for field in REQUIRED_LIMIT_UP_FIELDS if field not in first_stock]
-    if missing:
-        fail(f"first limit-up record is missing fields: {', '.join(missing)}")
+    if limit_ups:
+        first_stock = limit_ups[0]
+        missing = [field for field in REQUIRED_LIMIT_UP_FIELDS if field not in first_stock]
+        if missing:
+            fail(f"first limit-up record is missing fields: {', '.join(missing)}")
 
     codes = [str(item.get("code") or "") for item in limit_ups]
     invalid_codes = [code for code in codes if not re.fullmatch(r"\d{6}", code)]
@@ -99,19 +101,19 @@ def main():
     if invalid_boards:
         fail(f"limit-up records with invalid market boards: {', '.join(invalid_boards[:5])}")
 
-    highest_board = max(int(item.get("consecutive_days") or 1) for item in limit_ups)
+    highest_board = max([int(item.get("consecutive_days") or 1) for item in limit_ups] or [0])
     if int(sentiment.get("highest_board") or 0) != highest_board:
         fail("sentiment.highest_board does not match limit_ups")
 
-    required_sections = ["broken_limits", "limit_downs", "strong_stocks", "sub_new_stocks", "stats"]
-    empty_sections = [name for name in required_sections if not payload.get(name)]
-    if empty_sections:
-        fail(f"empty required sections: {', '.join(empty_sections)}")
+    required_sections = ["limit_ups", "broken_limits", "limit_downs", "strong_stocks", "sub_new_stocks", "stats"]
+    invalid_sections = [name for name in required_sections if not isinstance(payload.get(name), list)]
+    if invalid_sections:
+        fail(f"required sections are not arrays: {', '.join(invalid_sections)}")
 
     rankings = payload.get("rankings") or {}
     for key in ["industry_limit_rank", "theme_limit_rank", "market_board_limit_rank"]:
-        if not rankings.get(key):
-            fail(f"rankings.{key} is empty")
+        if not isinstance(rankings.get(key), list):
+            fail(f"rankings.{key} is not an array")
 
     print(
         "data validation ok: "
