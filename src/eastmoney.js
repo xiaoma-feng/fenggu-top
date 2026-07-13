@@ -1,6 +1,14 @@
 const POOL_BASE_URL = "https://push2ex.eastmoney.com";
-const TREND_BASE_URL = "https://push2his.eastmoney.com/api/qt/stock/trends2/get";
+const TENCENT_TREND_BASE_URLS = [
+  "https://web.ifzq.gtimg.cn/appstock/app/minute/query",
+  "https://ifzq.gtimg.cn/appstock/app/minute/query",
+];
+const EASTMONEY_TREND_BASE_URLS = [
+  "https://push2.eastmoney.com/api/qt/stock/trends2/get",
+  "https://push2his.eastmoney.com/api/qt/stock/trends2/get",
+];
 const EASTMONEY_TOKEN = "7eea3edcaed734bea9cbfc24409ed989";
+const EASTMONEY_TREND_TOKEN = "fa5fd1943c7b386f172d6893dbfba10b";
 
 function numberValue(value, fallback = 0) {
   const parsed = Number(value);
@@ -112,6 +120,40 @@ async function fetchJsonWithRetry(url, attempts = 2) {
   throw lastError || new Error("行情接口请求失败");
 }
 
+function fetchJsonp(url, params, timeoutMs = 12000) {
+  return new Promise((resolve, reject) => {
+    const callbackName = `__fengguTrend_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement("script");
+    let settled = false;
+    let timeout;
+
+    function cleanup() {
+      window.clearTimeout(timeout);
+      script.remove();
+      try {
+        delete window[callbackName];
+      } catch {
+        window[callbackName] = undefined;
+      }
+    }
+
+    function finish(error, payload) {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (error) reject(error);
+      else resolve(payload);
+    }
+
+    window[callbackName] = (payload) => finish(null, payload);
+    script.async = true;
+    script.onerror = () => finish(new Error("分时行情脚本加载失败"));
+    script.src = `${url}?${new URLSearchParams({ ...params, cb: callbackName })}`;
+    timeout = window.setTimeout(() => finish(new Error("分时行情请求超时")), timeoutMs);
+    document.head.appendChild(script);
+  });
+}
+
 async function fetchPool(path, date, sort, pageSize, normalizer) {
   const params = new URLSearchParams({
     ut: EASTMONEY_TOKEN,
@@ -164,16 +206,65 @@ function marketId(code) {
   return String(code || "").startsWith("6") ? 1 : 0;
 }
 
-export async function fetchIntradayTrend(code) {
-  const normalizedCode = String(code || "").padStart(6, "0");
-  const params = new URLSearchParams({
-    secid: `${marketId(normalizedCode)}.${normalizedCode}`,
-    fields1: "f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11",
-    fields2: "f51,f52,f53,f54,f55,f56,f57,f58",
-    ndays: "1",
-    iscr: "0",
-  });
-  const payload = await fetchJsonWithRetry(`${TREND_BASE_URL}?${params}`, 3);
+function tencentSymbol(code) {
+  const value = String(code || "").padStart(6, "0");
+  if (value.startsWith("6")) return `sh${value}`;
+  if (value.startsWith("8") || value.startsWith("4") || value.startsWith("920")) return `bj${value}`;
+  return `sz${value}`;
+}
+
+function parseTencentPoints(rows) {
+  let previousVolume = 0;
+  let calculatedAmount = 0;
+  return (rows || []).map((row) => {
+    const fields = String(row || "").trim().split(/\s+/);
+    const rawTime = fields[0] || "";
+    const price = numberValue(fields[1]);
+    const volume = Math.max(0, numberValue(fields[2]));
+    const amount = Math.max(0, numberValue(fields[3]));
+    const incrementalVolume = Math.max(0, volume - previousVolume);
+    previousVolume = volume;
+    calculatedAmount += incrementalVolume * price;
+    const average = amount > 0 && volume > 0
+      ? amount / volume / 100
+      : (volume > 0 ? calculatedAmount / volume : price);
+    return {
+      time: rawTime.length === 4 ? `${rawTime.slice(0, 2)}:${rawTime.slice(2)}` : rawTime,
+      price,
+      average: average > 0 ? average : price,
+      volume,
+    };
+  }).filter((point) => point.time && point.price > 0);
+}
+
+function parseTencentTrend(payload, symbol, normalizedCode) {
+  const source = payload?.data?.[symbol];
+  const points = parseTencentPoints(source?.data?.data);
+  const quote = source?.qt?.[symbol] || [];
+  if (!source || !points.length) throw new Error("腾讯分时数据为空");
+  return {
+    code: normalizedCode,
+    name: quote[1] || "",
+    preClose: numberValue(quote[4], points[0]?.price),
+    points,
+  };
+}
+
+async function fetchTencentTrend(normalizedCode) {
+  const symbol = tencentSymbol(normalizedCode);
+  let lastError;
+  for (const baseUrl of TENCENT_TREND_BASE_URLS) {
+    try {
+      const payload = await fetchJsonWithRetry(`${baseUrl}?code=${encodeURIComponent(symbol)}`, 1);
+      return parseTencentTrend(payload, symbol, normalizedCode);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("腾讯分时行情请求失败");
+}
+
+function parseEastmoneyTrend(payload, normalizedCode) {
   const source = payload?.data;
   const points = (source?.trends || []).map((row) => {
     const fields = String(row).split(",");
@@ -184,11 +275,44 @@ export async function fetchIntradayTrend(code) {
       volume: numberValue(fields[5]),
     };
   }).filter((point) => point.price > 0);
-  if (!source || !points.length) throw new Error("暂无今日分时数据");
+  if (!source || !points.length) throw new Error("东方财富分时数据为空");
   return {
     code: normalizedCode,
     name: source.name || "",
     preClose: numberValue(source.preClose),
     points,
   };
+}
+
+async function fetchEastmoneyTrend(normalizedCode) {
+  const params = {
+    secid: `${marketId(normalizedCode)}.${normalizedCode}`,
+    fields1: "f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13",
+    fields2: "f51,f52,f53,f54,f55,f56,f57,f58",
+    ndays: "1",
+    iscr: "0",
+    ut: EASTMONEY_TREND_TOKEN,
+  };
+  let lastError;
+  for (const baseUrl of EASTMONEY_TREND_BASE_URLS) {
+    try {
+      return parseEastmoneyTrend(await fetchJsonp(baseUrl, params), normalizedCode);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("东方财富分时行情请求失败");
+}
+
+export async function fetchIntradayTrend(code) {
+  const normalizedCode = String(code || "").padStart(6, "0");
+  try {
+    return await fetchTencentTrend(normalizedCode);
+  } catch (tencentError) {
+    try {
+      return await fetchEastmoneyTrend(normalizedCode);
+    } catch (eastmoneyError) {
+      throw new AggregateError([tencentError, eastmoneyError], "暂无今日分时数据");
+    }
+  }
 }

@@ -1,5 +1,5 @@
 import { createApp, computed, ref, onMounted, onBeforeUnmount, nextTick } from "./vendor/vue.esm-browser.prod.js";
-import { fetchIntradayTrend, fetchRealtimePools } from "./eastmoney.js?v=20260713-realtime-details";
+import { fetchIntradayTrend, fetchRealtimePools } from "./eastmoney.js?v=20260713-intraday-fix";
 
 const emptyData = {
   meta: {},
@@ -16,6 +16,7 @@ const emptyData = {
 const marketBoards = ["主板", "创业板", "科创板", "北交所"];
 const refreshMs = 60000;
 const feedbackRefreshMs = 30000;
+const intradayCacheTtlMs = 60000;
 const feedbackStorageKey = "fenggu-feedbacks";
 const layoutKey = "fenggu-layout:";
 const themeNotice = "题材来自东方财富概念数据，仅供参考";
@@ -882,8 +883,9 @@ createApp({
     }
 
     async function loadStockIntraday(code) {
-      if (intradayCache.has(code)) {
-        intradayTrend.value = intradayCache.get(code);
+      const cached = intradayCache.get(code);
+      if (cached && Date.now() - cached.loadedAt < intradayCacheTtlMs) {
+        intradayTrend.value = cached.trend;
         intradayLoading.value = false;
         intradayError.value = "";
         return;
@@ -892,7 +894,7 @@ createApp({
       intradayError.value = "";
       try {
         const trend = await fetchIntradayTrend(code);
-        intradayCache.set(code, trend);
+        intradayCache.set(code, { trend, loadedAt: Date.now() });
         if (hoveredStock.value?.code === code) intradayTrend.value = trend;
       } catch (error) {
         if (hoveredStock.value?.code === code) intradayError.value = "暂无今日分时数据";
