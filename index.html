@@ -385,7 +385,19 @@
 
     <div id="boot-status" role="status">页面加载中...</div>
 
-    <script src="./src/fallback-data.js?v=20260713-down-stats"></script>
-    <script type="module" src="./src/app.js?v=20260713-down-stats"></script>
+    <script>
+      function showBootFailure() {
+        var app = document.getElementById("app");
+        var status = document.getElementById("boot-status");
+        if (!app || !status || !app.hasAttribute("v-cloak")) return;
+        status.innerHTML =
+          '<span>页面加载失败，请检查网络后</span>' +
+          '<button type="button" onclick="location.reload()">重新加载</button>';
+        status.classList.add("boot-failed");
+      }
+
+      window.setTimeout(showBootFailure, 12000);
+    </script>
+    <script src="./src/app.bundle.js?v=20260714-boot-fix" onerror="showBootFailure()"></script>
   </body>
 </html>

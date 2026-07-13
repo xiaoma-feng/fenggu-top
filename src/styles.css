@@ -56,6 +56,19 @@ button {
   z-index: 9999;
 }
 
+#boot-status.boot-failed {
+  color: #edf4ff;
+  gap: 10px;
+}
+
+#boot-status.boot-failed button {
+  background: #ff4058;
+  border: 0;
+  border-radius: 4px;
+  color: #fff;
+  padding: 7px 12px;
+}
+
 #app:not([v-cloak]) + #boot-status {
   display: none;
 }
