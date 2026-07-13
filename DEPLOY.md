@@ -47,6 +47,34 @@
 - 页面里有 `上市板块` 筛选。
 - 题材排行下方显示 `题材为系统识别，仅供参考`。
 - 盘中访问时，页面会尝试请求 `/api/realtime`。
+- 左侧用户反馈能打开弹窗；完成 D1 配置后可公开提交、展示、点赞。
+
+## 用户反馈数据库配置
+
+用户反馈不是存在本地浏览器，而是存在 Cloudflare 免费 D1。Pages 首次部署后按下面做：
+
+1. Cloudflare 后台进入 `Workers & Pages`。
+2. 进入 `D1 SQL Database`。
+3. 点击 `Create database`，名称建议填：`fenggu-feedback`。
+4. 进入这个数据库的 `Console`。
+5. 打开项目里的 `migrations/0001_feedback.sql`，复制全部 SQL 并执行。
+6. 回到 Pages 项目 `fenggu` 或 `fenggu-top`。
+7. 进入 `Settings` -> `Functions` -> `D1 database bindings`。
+8. 添加绑定：
+   - Variable name: `FEEDBACK_DB`
+   - D1 database: `fenggu-feedback`
+9. 进入 `Settings` -> `Environment variables`。
+10. 添加管理员删除密钥：
+    - Name: `FEEDBACK_ADMIN_TOKEN`
+    - Value: 自己设置一串密码
+11. 点击重新部署。
+
+管理员删除反馈的方法：
+
+1. 打开网站。
+2. 左侧“用户反馈”标题右边点 `管理`。
+3. 输入 `FEEDBACK_ADMIN_TOKEN`。
+4. 每条反馈旁边会出现 `删除`。
 
 ## 本地预览
 

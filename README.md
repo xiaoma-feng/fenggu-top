@@ -1,6 +1,6 @@
 # 峰股top
 
-峰股top是一个零成本部署的A股涨停情绪数据中心。第一版采用静态网站方案，不需要服务器、数据库或后端常驻服务。
+峰股top是一个零成本部署的A股涨停情绪数据中心。行情数据采用静态 JSON + Cloudflare Pages Functions；用户反馈使用 Cloudflare 免费 D1 保存，不需要购买服务器。
 
 ## 当前功能
 
@@ -12,6 +12,7 @@
 - 最高连板排行
 - 涨停热力图
 - 断板 / 炸板观察
+- 用户反馈：匿名提交、实时展示、点赞、管理员删除
 
 ## 本地预览
 
@@ -81,9 +82,26 @@ cron: "30 7 * * 1-5"
    - `https://fenggu.pages.dev`
    - 如果被占用，使用 `https://fenggu-top.pages.dev`
 
+## 用户反馈 D1 配置
+
+部署公开反馈前，需要在 Cloudflare 免费创建一个 D1 数据库：
+
+1. Cloudflare 后台进入 `Workers & Pages` -> `D1 SQL Database`。
+2. 创建数据库，例如 `fenggu-feedback`。
+3. 打开数据库控制台，执行 `migrations/0001_feedback.sql` 里的 SQL。
+4. 回到 Pages 项目 `fenggu` 的 `Settings`。
+5. 在 `Functions` 里添加 D1 binding：
+   - Variable name: `FEEDBACK_DB`
+   - D1 database: 选择刚创建的 `fenggu-feedback`
+6. 在 `Environment variables` 里添加管理员密钥：
+   - Name: `FEEDBACK_ADMIN_TOKEN`
+   - Value: 自己设置一串不容易猜的密码
+7. 重新部署一次 Pages。
+
 ## 注意事项
 
 - 第一版使用 AKShare 做原型数据源，免费但不保证生产级稳定。
 - 如果 AKShare 字段变化，可能需要调整 `scripts/update_data.py` 里的字段映射。
 - 第一版不做登录注册，默认公开访问。
+- 管理员删除反馈通过 `FEEDBACK_ADMIN_TOKEN` 控制，不要公开这个密钥。
 - 历史统计依赖每日归档数据，刚开始运行时历史次数会偏少，运行时间越久越准确。

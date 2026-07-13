@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="峰股top - A股涨停情绪数据中心" />
     <title>峰股top | A股涨停情绪数据中心</title>
-    <link rel="stylesheet" href="./src/styles.css?v=20260713-realtime-details" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260713-down-stats" />
   </head>
   <body>
     <div id="app" v-cloak>
@@ -153,8 +153,10 @@
                 <div class="table-actions">
                   <select :value="section.sortKey" @change="setSort(section.key, $event.target.value)" aria-label="表格排序">
                     <option value="first_limit_time">按首次封板</option>
-                    <option value="consecutive_days">按连板数</option>
-                    <option value="seal_amount">按封单金额</option>
+                    <option :value="section.key === 'down' ? 'consecutive_down_days' : 'consecutive_days'">
+                      {{ section.key === 'down' ? '按连跌数' : '按连板数' }}
+                    </option>
+                    <option v-if="section.showSealAmount" value="seal_amount">按封单金额</option>
                     <option value="turnover_amount">按成交额</option>
                     <option value="turnover_rate">按换手率</option>
                     <option value="open_times">按炸板次数</option>
@@ -177,11 +179,11 @@
                       <th>最后封板</th>
                       <th>成交额</th>
                       <th>换手率</th>
-                      <th>封单金额</th>
-                      <th>连板</th>
+                      <th v-if="section.showSealAmount">封单金额</th>
+                      <th>{{ section.streakLabel }}</th>
                       <th>
-                        涨停统计
-                        <span class="help-dot" :title="limitStatsHelp">?</span>
+                        {{ section.statsLabel }}
+                        <span class="help-dot" :title="section.statsHelp">?</span>
                       </th>
                       <th>行业</th>
                       <th>题材</th>
@@ -205,14 +207,18 @@
                       <td>{{ timeCellText(stock, 'last_limit_time', section.key) }}</td>
                       <td>{{ formatMoney(stock.turnover_amount) }}</td>
                       <td>{{ formatPercent(stock.turnover_rate) }}</td>
-                      <td>{{ formatMoney(stock.seal_amount) }}</td>
-                      <td><span class="badge hot">{{ stock.consecutive_days || 1 }}</span></td>
-                      <td>{{ limitStatsText(stock) }}</td>
+                      <td v-if="section.showSealAmount">{{ formatMoney(stock.seal_amount) }}</td>
+                      <td>
+                        <span class="badge" :class="section.key === 'down' ? 'down-streak' : 'hot'">
+                          {{ streakValue(stock, section.key) }}
+                        </span>
+                      </td>
+                      <td>{{ section.key === 'down' ? downStatsText(stock) : limitStatsText(stock) }}</td>
                       <td>{{ stock.industry || '暂无行业数据' }}</td>
                       <td class="theme-cell">{{ stock.theme || '暂无题材数据' }}</td>
                     </tr>
                     <tr v-if="!section.rows.length">
-                      <td colspan="14" class="empty">暂无匹配数据</td>
+                      <td :colspan="section.columnCount" class="empty">暂无匹配数据</td>
                     </tr>
                   </tbody>
                 </table>
@@ -291,7 +297,13 @@
           </aside>
         </section>
 
-        <div v-if="hoveredStock" class="stock-popover" :style="popoverStyle">
+        <div
+          v-if="hoveredStock"
+          class="stock-popover"
+          :style="popoverStyle"
+          @mouseenter="cancelHideStockPopover"
+          @mouseleave="hideStockPopover"
+        >
           <div class="popover-head">
             <strong>{{ hoveredStock.name }}</strong>
             <span>{{ hoveredStock.code }}</span>
@@ -309,6 +321,19 @@
             <div><dt>首次涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).first_limit_date) }}</dd></div>
             <div><dt>最近涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).last_limit_date) }}</dd></div>
           </dl>
+          <section class="down-stat-panel" aria-label="跌停统计">
+            <div class="down-stat-head">
+              <strong>跌停统计</strong>
+              <span>精确归档自 {{ downArchiveStart }}</span>
+            </div>
+            <dl class="down-stat-grid">
+              <div><dt>历史跌停</dt><dd>{{ detailValue(stockStats(hoveredStock).total_down_count) }}</dd></div>
+              <div><dt>最高连跌</dt><dd>{{ detailValue(stockStats(hoveredStock).max_consecutive_down_days) }}</dd></div>
+              <div><dt>今年跌停</dt><dd>{{ detailValue(stockStats(hoveredStock).down_count_ytd) }}</dd></div>
+              <div><dt>近一年跌停</dt><dd>{{ detailValue(stockStats(hoveredStock).down_count_1y) }}</dd></div>
+              <div><dt>近三年跌停</dt><dd>{{ detailValue(stockStats(hoveredStock).down_count_3y) }}</dd></div>
+            </dl>
+          </section>
           <section class="intraday-card" aria-label="今日分时图">
             <div class="intraday-head">
               <strong>今日分时</strong>
@@ -360,7 +385,7 @@
 
     <div id="boot-status" role="status">页面加载中...</div>
 
-    <script src="./src/fallback-data.js?v=20260713-realtime-details"></script>
-    <script type="module" src="./src/app.js?v=20260713-intraday-fix"></script>
+    <script src="./src/fallback-data.js?v=20260713-down-stats"></script>
+    <script type="module" src="./src/app.js?v=20260713-down-stats"></script>
   </body>
 </html>

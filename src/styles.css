@@ -743,6 +743,12 @@ td {
   color: #fff;
 }
 
+.badge.down-streak {
+  background: rgba(47, 209, 139, 0.34);
+  border: 1px solid rgba(72, 213, 151, 0.42);
+  color: #effff8;
+}
+
 .help-dot {
   background: rgba(145, 160, 184, 0.22);
   border: 1px solid rgba(145, 160, 184, 0.5);
@@ -839,11 +845,14 @@ td {
   border: 1px solid rgba(126, 151, 190, 0.28);
   border-radius: 8px;
   box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+  max-height: calc(100vh - 24px);
   max-width: calc(100vw - 24px);
+  overscroll-behavior: contain;
+  overflow-y: auto;
   padding: 14px;
-  pointer-events: none;
+  pointer-events: auto;
   position: fixed;
-  width: 380px;
+  width: 620px;
   z-index: 50;
 }
 
@@ -868,11 +877,57 @@ td {
 }
 
 .stock-popover dl {
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .stock-popover dd {
   font-size: 14px;
+}
+
+.down-stat-panel {
+  background: rgba(24, 95, 68, 0.16);
+  border: 1px solid rgba(47, 209, 139, 0.38);
+  border-left: 3px solid var(--green);
+  border-radius: 6px;
+  margin-top: 12px;
+  padding: 10px;
+}
+
+.down-stat-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.down-stat-head strong {
+  color: var(--green);
+  font-size: 14px;
+}
+
+.down-stat-head span {
+  color: #8fcbb1;
+  font-size: 11px;
+}
+
+.stock-popover .down-stat-grid {
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.stock-popover .down-stat-grid div {
+  background: rgba(47, 209, 139, 0.1);
+  border: 1px solid rgba(47, 209, 139, 0.14);
+  padding: 9px;
+}
+
+.stock-popover .down-stat-grid dt {
+  color: #a7d8c3;
+}
+
+.stock-popover .down-stat-grid dd {
+  color: var(--green);
+  font-size: 16px;
 }
 
 .intraday-card {
@@ -1204,5 +1259,22 @@ td {
 
   .stock-detail dl {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .stock-popover {
+    padding: 12px;
+    width: calc(100vw - 24px);
+  }
+
+  .stock-popover dl,
+  .stock-popover .down-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .down-stat-head {
+    align-items: flex-start;
+    gap: 4px;
   }
 }

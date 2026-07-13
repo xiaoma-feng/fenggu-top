@@ -26,6 +26,14 @@ REQUIRED_LIMIT_UP_FIELDS = [
     "limit_stats",
     "market_board",
 ]
+REQUIRED_LIMIT_DOWN_FIELDS = [
+    "code",
+    "name",
+    "consecutive_down_days",
+    "down_count_30d",
+    "down_stats",
+    "market_board",
+]
 VALID_MARKET_BOARDS = {"主板", "创业板", "科创板", "北交所"}
 
 
@@ -85,6 +93,21 @@ def main():
         missing = [field for field in REQUIRED_LIMIT_UP_FIELDS if field not in first_stock]
         if missing:
             fail(f"first limit-up record is missing fields: {', '.join(missing)}")
+
+    if limit_downs:
+        first_down = limit_downs[0]
+        missing = [field for field in REQUIRED_LIMIT_DOWN_FIELDS if field not in first_down]
+        if missing:
+            fail(f"first limit-down record is missing fields: {', '.join(missing)}")
+        invalid_down_rows = [
+            item.get("code")
+            for item in limit_downs
+            if int(item.get("consecutive_down_days") or 0) < 1
+            or int(item.get("down_count_30d") or 0) < 1
+            or not re.fullmatch(r"30/\d+", str(item.get("down_stats") or ""))
+        ]
+        if invalid_down_rows:
+            fail(f"invalid limit-down statistics: {', '.join(invalid_down_rows[:5])}")
 
     codes = [str(item.get("code") or "") for item in limit_ups]
     invalid_codes = [code for code in codes if not re.fullmatch(r"\d{6}", code)]

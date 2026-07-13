@@ -86,18 +86,19 @@ function normalizeBroken(row) {
 }
 
 function normalizeLimitDown(row) {
+  const consecutiveDownDays = Math.max(1, numberValue(row.days, 1));
   return {
     ...commonStock(row),
     first_limit_time: "",
     last_limit_time: formatPoolTime(row.lbt),
     seal_amount: numberValue(row.fund),
     board_turnover_amount: numberValue(row.fba),
-    consecutive_days: Math.max(1, numberValue(row.days, 1)),
+    consecutive_days: consecutiveDownDays,
+    consecutive_down_days: consecutiveDownDays,
     open_times: Math.max(0, numberValue(row.oc)),
     pe_dynamic: numberValue(row.pe),
-    limit_days_in_window: 0,
-    limit_days_window: 0,
-    limit_stats: "0/0",
+    down_count_30d: 1,
+    down_stats: "30/1",
   };
 }
 

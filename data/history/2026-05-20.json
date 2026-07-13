@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "峰股top",
     "trade_date": "2026-05-20",
-    "updated_at": "2026-07-13 18:42",
+    "updated_at": "2026-07-12 12:15",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "empty_or_failed",
@@ -80,8 +80,12 @@
       "2026-04-15",
       "2026-04-14",
       "2026-04-13",
-      "2026-04-10"
-    ]
+      "2026-04-10",
+      "2026-04-09",
+      "2026-04-08",
+      "2026-04-07"
+    ],
+    "down_archive_start": "2026-04-07"
   },
   "sentiment": {
     "limit_up_count": 0,
