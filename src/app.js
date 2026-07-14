@@ -15,6 +15,7 @@ const emptyData = {
 
 const marketBoards = ["主板", "创业板", "科创板", "北交所"];
 const refreshMs = 60000;
+const closedRefreshMs = 5 * 60000;
 const feedbackRefreshMs = 30000;
 const intradayCacheTtlMs = 60000;
 const feedbackStorageKey = "fenggu-feedbacks";
@@ -271,6 +272,7 @@ createApp({
     let popoverPositionFrame = null;
     let popoverDismissTimer = null;
     let popoverPointer = { x: 0, y: 0 };
+    let lastClosedRefreshAt = 0;
     const cachedStatsByCode = new Map();
     const intradayCache = new Map();
 
@@ -353,21 +355,83 @@ createApp({
       lastRefreshAt.value = new Date().toLocaleTimeString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false });
     }
 
+    function currentSessionPayload(payload, status, note) {
+      const today = shanghaiDateText();
+      const base = todayEmptyPayload(today, status);
+      return {
+        ...base,
+        ...payload,
+        meta: {
+          ...base.meta,
+          ...(payload.meta || {}),
+          trade_date: today,
+          data_status: status,
+          notes: note ? [note] : (payload.meta?.notes || base.meta.notes),
+        },
+        sentiment: {
+          ...base.sentiment,
+          ...(payload.sentiment || {}),
+          limit_up_count: (payload.limit_ups || []).length,
+          broken_limit_count: (payload.broken_limits || []).length,
+          limit_down_count: (payload.limit_downs || []).length,
+        },
+        limit_ups: payload.limit_ups || [],
+        broken_limits: payload.broken_limits || [],
+        limit_downs: payload.limit_downs || [],
+        stats: [...cachedStatsByCode.values()],
+      };
+    }
+
+    function hasMarketRows(payload) {
+      return (payload?.limit_ups || []).length
+        + (payload?.broken_limits || []).length
+        + (payload?.limit_downs || []).length > 0;
+    }
+
     async function loadClosedData() {
+      lastClosedRefreshAt = Date.now();
       if (window.location.protocol === "file:") {
         updateData(window.__FENGGU_FALLBACK_DATA__ || emptyData);
         realtimeStatus.value = "本地备用数据";
         return;
       }
-      const payload = await fetchJson("./data/latest.json");
-      cachePayloadDetails(payload);
       const today = shanghaiDateText();
-      if (payload?.meta?.trade_date === today) {
-        updateData(payload);
-        realtimeStatus.value = "收盘锁定";
-        loadError.value = "";
-        return;
+      let archivedPayload = null;
+      let archiveError = null;
+      try {
+        archivedPayload = await fetchJson(`./data/latest.json?v=${Math.floor(Date.now() / closedRefreshMs)}`);
+        cachePayloadDetails(archivedPayload);
+        if (archivedPayload?.meta?.trade_date === today) {
+          updateData(archivedPayload);
+          realtimeStatus.value = "收盘锁定";
+          loadError.value = "";
+          return;
+        }
+      } catch (error) {
+        archiveError = error;
+        console.warn("收盘归档读取失败", error);
       }
+
+      if (await isTradingDay(today)) {
+        try {
+          const livePayload = await fetchRealtimePools(today);
+          if (hasMarketRows(livePayload)) {
+            updateData(currentSessionPayload(
+              livePayload,
+              "closed_fallback",
+              "自动归档暂未完成，当前使用东方财富当日收盘池补偿；归档恢复后会自动切换。",
+            ));
+            realtimeStatus.value = "收盘数据补偿";
+            loadError.value = archiveError
+              ? "收盘归档暂时不可用，已自动切换到东方财富当日收盘数据。"
+              : "收盘归档尚未更新，已自动切换到东方财富当日收盘数据。";
+            return;
+          }
+        } catch (error) {
+          console.warn("收盘数据补偿失败", error);
+        }
+      }
+
       updateData(todayEmptyPayload(today, "waiting_closed"));
       realtimeStatus.value = "今日等待更新";
       loadError.value = "今日数据等待更新，当前不沿用前一个交易日数据。你可以手动选择历史交易日查看。";
@@ -379,27 +443,7 @@ createApp({
       try {
         const today = shanghaiDateText();
         const payload = await fetchRealtimePools(today);
-        updateData({
-          ...todayEmptyPayload(today, "intraday"),
-          ...payload,
-          meta: {
-            ...todayEmptyPayload(today, "intraday").meta,
-            ...(payload.meta || {}),
-            trade_date: today,
-            data_status: payload.meta?.data_status || "intraday",
-          },
-          sentiment: {
-            ...todayEmptyPayload(today, "intraday").sentiment,
-            ...(payload.sentiment || {}),
-            limit_up_count: (payload.limit_ups || []).length,
-            broken_limit_count: (payload.broken_limits || []).length,
-            limit_down_count: (payload.limit_downs || []).length,
-          },
-          limit_ups: payload.limit_ups || [],
-          broken_limits: payload.broken_limits || [],
-          limit_downs: payload.limit_downs || [],
-          stats: [...cachedStatsByCode.values()],
-        });
+        updateData(currentSessionPayload(payload, "intraday"));
         realtimeStatus.value = marketPhase() === "settling" ? "等待收盘固化" : "盘中实时";
         loadError.value = "";
       } catch (error) {
@@ -442,6 +486,8 @@ createApp({
         return;
       }
       if (!historicalDateLocked.value && (!selectedDate.value || selectedDate.value === today || data.value.meta.trade_date !== today)) {
+        if (Date.now() - lastClosedRefreshAt < closedRefreshMs) return;
+        lastClosedRefreshAt = Date.now();
         await loadClosedData();
       }
     }
@@ -536,6 +582,7 @@ createApp({
       if (realtimeStatus.value === "午间暂停刷新") return `当前保留 ${todayText.value} 上午收盘数据，13:00 后恢复每 1 分钟刷新。`;
       if (realtimeStatus.value === "等待开盘") return `当前显示 ${todayText.value} 今日空数据，09:30 开盘后开始实时更新。`;
       if (realtimeStatus.value === "等待收盘固化") return `当前显示 ${todayText.value} 最后一份盘中数据，15:30 后切换收盘锁定。`;
+      if (realtimeStatus.value === "收盘数据补偿") return `当前显示 ${todayText.value} 东方财富当日收盘数据，归档恢复后自动切换。`;
       if (realtimeStatus.value === "历史数据") return `当前显示历史交易日 ${data.value.meta.trade_date}，可在日期框切换任意历史日期。`;
       if (realtimeStatus.value === "当天非交易日") return `当前选择 ${data.value.meta.trade_date}，当天非交易日，无数据。`;
       if (realtimeStatus.value === "暂无历史数据") return `当前选择 ${data.value.meta.trade_date}，暂无历史数据。`;
@@ -705,9 +752,9 @@ createApp({
 
     const intradayChart = computed(() => {
       const source = intradayTrend.value;
-      const width = 350;
-      const height = 112;
-      const padding = 5;
+      const width = 430;
+      const height = 154;
+      const padding = 7;
       if (!source?.points?.length) return { points: "", averagePoints: "", baselineY: height / 2, changePct: 0, color: "#ff4058", width, height };
       const prices = source.points.flatMap((point) => [point.price, point.average]).filter((value) => value > 0);
       if (source.preClose > 0) prices.push(source.preClose);
@@ -802,15 +849,12 @@ createApp({
       const isBrokenToday = brokenWatch.value.some((item) => item.code === code);
       const merged = {
         total_limit_count: 0,
-        broken_count_total: isBrokenToday ? 1 : 0,
         max_consecutive_days: 0,
         limit_count_7d: 0,
         limit_count_30d: 0,
         limit_count_ytd: 0,
         limit_count_1y: 0,
         limit_count_3y: 0,
-        first_limit_date: "暂无记录",
-        last_limit_date: "暂无记录",
         total_down_count: 0,
         max_consecutive_down_days: 0,
         down_count_30d: 0,
@@ -989,9 +1033,9 @@ createApp({
       window.addEventListener("blur", onUp);
     }
 
-    async function loadStockIntraday(code) {
+    async function loadStockIntraday(code, force = false) {
       const cached = intradayCache.get(code);
-      if (cached && Date.now() - cached.loadedAt < intradayCacheTtlMs) {
+      if (!force && cached && Date.now() - cached.loadedAt < intradayCacheTtlMs) {
         intradayTrend.value = cached.trend;
         intradayLoading.value = false;
         intradayError.value = "";
@@ -1004,11 +1048,19 @@ createApp({
         intradayCache.set(code, { trend, loadedAt: Date.now() });
         if (hoveredStock.value?.code === code) intradayTrend.value = trend;
       } catch (error) {
-        if (hoveredStock.value?.code === code) intradayError.value = "暂无今日分时数据";
+        if (hoveredStock.value?.code === code) intradayError.value = "分时接口暂时不可用";
         console.warn(error);
       } finally {
-        if (hoveredStock.value?.code === code) intradayLoading.value = false;
+        if (hoveredStock.value?.code === code) {
+          intradayLoading.value = false;
+          schedulePopoverPosition();
+        }
       }
+    }
+
+    function retryStockIntraday() {
+      const code = hoveredStock.value?.code;
+      if (code) loadStockIntraday(code, true);
     }
 
     function schedulePopoverPosition() {
@@ -1260,12 +1312,20 @@ createApp({
     function startRefreshTimer() {
       refreshTimer = window.setInterval(refreshForTime, refreshMs);
       feedbackTimer = window.setInterval(loadFeedbacks, feedbackRefreshMs);
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-          refreshForTime();
-          loadFeedbacks();
-        }
-      });
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("resize", handleViewportChange);
+      window.addEventListener("orientationchange", handleViewportChange);
+    }
+
+    function handleVisibilityChange() {
+      if (!document.hidden) {
+        refreshForTime();
+        loadFeedbacks();
+      }
+    }
+
+    function handleViewportChange() {
+      if (hoveredStock.value) schedulePopoverPosition();
     }
 
     function toggleRefresh() {
@@ -1289,6 +1349,9 @@ createApp({
       if (observer) observer.disconnect();
       if (popoverPositionFrame) window.cancelAnimationFrame(popoverPositionFrame);
       if (popoverDismissTimer) window.clearTimeout(popoverDismissTimer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("orientationchange", handleViewportChange);
     });
 
     return {
@@ -1329,6 +1392,7 @@ createApp({
       intradayChart,
       intradayLoading,
       intradayError,
+      retryStockIntraday,
       feedbackItems,
       feedbackError,
       feedbackNotice,

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="峰股top - A股涨停情绪数据中心" />
     <title>峰股top | A股涨停情绪数据中心</title>
-    <link rel="stylesheet" href="./src/styles.css?v=20260713-down-stats" />
+  <link rel="stylesheet" href="./src/styles.css?v=20260714-data-hover-fix" />
   </head>
   <body>
     <div id="app" v-cloak>
@@ -305,22 +305,73 @@
           @mouseleave="hideStockPopover"
         >
           <div class="popover-head">
-            <strong>{{ hoveredStock.name }}</strong>
-            <span>{{ hoveredStock.code }}</span>
+            <div class="popover-identity">
+              <strong>{{ hoveredStock.name }}</strong>
+              <span>{{ hoveredStock.code }}</span>
+            </div>
+            <div class="popover-price">
+              <strong :class="rowClass(hoveredStock)">{{ priceText(hoveredStock.latest_price) }}</strong>
+              <span :class="rowClass(hoveredStock)">{{ formatPercent(hoveredStock.change_pct) }}</span>
+            </div>
           </div>
-          <p>{{ hoveredStock.industry || '暂无行业数据' }} / {{ hoveredStock.theme || '暂无题材数据' }} / {{ hoveredStock.market_board || '暂无上市板块' }}</p>
-          <dl>
-            <div><dt>流通市值</dt><dd>{{ formatMoney(hoveredStock.float_market_cap) }}</dd></div>
-            <div><dt>总市值</dt><dd>{{ formatMoney(hoveredStock.total_market_cap) }}</dd></div>
-            <div><dt>历史涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).total_limit_count) }}</dd></div>
-            <div><dt>历史炸板</dt><dd>{{ detailValue(stockStats(hoveredStock).broken_count_total) }}</dd></div>
-            <div><dt>最高连板</dt><dd>{{ detailValue(stockStats(hoveredStock).max_consecutive_days) }}</dd></div>
-            <div><dt>今年涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_ytd) }}</dd></div>
-            <div><dt>近一年</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_1y) }}</dd></div>
-            <div><dt>近三年</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_3y) }}</dd></div>
-            <div><dt>首次涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).first_limit_date) }}</dd></div>
-            <div><dt>最近涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).last_limit_date) }}</dd></div>
-          </dl>
+          <div class="popover-tags">
+            <span class="board-tag">{{ hoveredStock.market_board || '暂无上市板块' }}</span>
+            <span>{{ hoveredStock.industry || '暂无行业数据' }}</span>
+            <span class="theme-tag" :title="hoveredStock.theme || '暂无题材数据'">{{ hoveredStock.theme || '暂无题材数据' }}</span>
+          </div>
+
+          <div class="popover-primary">
+            <section class="intraday-card" aria-label="今日分时图">
+              <div class="intraday-head">
+                <div>
+                  <strong>今日分时</strong>
+                  <span class="trend-legend"><i class="price-line"></i>价格 <i class="average-line"></i>均价</span>
+                </div>
+                <span v-if="intradayTrend" :class="intradayChart.changePct >= 0 ? 'up-text' : 'down-text'">
+                  {{ priceText(intradayChart.lastPrice) }} / {{ formatPercent(intradayChart.changePct) }}
+                </span>
+              </div>
+              <div v-if="intradayLoading" class="intraday-state">分时数据加载中...</div>
+              <div v-else-if="intradayError" class="intraday-state intraday-error">
+                <span>{{ intradayError }}</span>
+                <button type="button" @click.stop="retryStockIntraday">重新加载</button>
+              </div>
+              <svg
+                v-else-if="intradayTrend"
+                class="intraday-chart"
+                :viewBox="`0 0 ${intradayChart.width} ${intradayChart.height}`"
+                role="img"
+                :aria-label="`${hoveredStock.name}今日分时图`"
+              >
+                <line x1="5" :x2="intradayChart.width - 5" :y1="intradayChart.baselineY" :y2="intradayChart.baselineY" class="trend-baseline" />
+                <polyline v-if="intradayChart.averagePoints" :points="intradayChart.averagePoints" class="trend-average" />
+                <polyline :points="intradayChart.points" class="trend-price" :style="{ stroke: intradayChart.color }" />
+              </svg>
+              <div v-if="intradayTrend" class="intraday-axis"><span>09:30</span><span>11:30 / 13:00</span><span>15:00</span></div>
+            </section>
+
+            <section class="market-snapshot" aria-label="行情概览">
+              <div class="popover-section-head"><strong>行情概览</strong></div>
+              <dl class="snapshot-grid">
+                <div><dt>流通市值</dt><dd>{{ formatMoney(hoveredStock.float_market_cap) }}</dd></div>
+                <div><dt>总市值</dt><dd>{{ formatMoney(hoveredStock.total_market_cap) }}</dd></div>
+                <div><dt>历史涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).total_limit_count) }}</dd></div>
+                <div><dt>历史炸板</dt><dd>{{ detailValue(stockStats(hoveredStock).broken_count_total) }}</dd></div>
+              </dl>
+            </section>
+          </div>
+
+          <section class="limit-stat-panel" aria-label="涨停与炸板记录">
+            <div class="popover-section-head"><strong>涨停与炸板记录</strong></div>
+            <dl class="limit-stat-grid">
+              <div><dt>最高连板</dt><dd>{{ detailValue(stockStats(hoveredStock).max_consecutive_days) }}</dd></div>
+              <div><dt>今年涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_ytd) }}</dd></div>
+              <div><dt>近一年涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_1y) }}</dd></div>
+              <div><dt>近三年涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).limit_count_3y) }}</dd></div>
+              <div><dt>首次涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).first_limit_date) }}</dd></div>
+              <div><dt>最近涨停</dt><dd>{{ detailValue(stockStats(hoveredStock).last_limit_date) }}</dd></div>
+            </dl>
+          </section>
           <section class="down-stat-panel" aria-label="跌停统计">
             <div class="down-stat-head">
               <strong>跌停统计</strong>
@@ -333,28 +384,6 @@
               <div><dt>近一年跌停</dt><dd>{{ detailValue(stockStats(hoveredStock).down_count_1y) }}</dd></div>
               <div><dt>近三年跌停</dt><dd>{{ detailValue(stockStats(hoveredStock).down_count_3y) }}</dd></div>
             </dl>
-          </section>
-          <section class="intraday-card" aria-label="今日分时图">
-            <div class="intraday-head">
-              <strong>今日分时</strong>
-              <span v-if="intradayTrend" :class="intradayChart.changePct >= 0 ? 'up-text' : 'down-text'">
-                {{ priceText(intradayChart.lastPrice) }} / {{ formatPercent(intradayChart.changePct) }}
-              </span>
-            </div>
-            <div v-if="intradayLoading" class="intraday-state">分时数据加载中...</div>
-            <div v-else-if="intradayError" class="intraday-state">{{ intradayError }}</div>
-            <svg
-              v-else-if="intradayTrend"
-              class="intraday-chart"
-              :viewBox="`0 0 ${intradayChart.width} ${intradayChart.height}`"
-              role="img"
-              :aria-label="`${hoveredStock.name}今日分时图`"
-            >
-              <line x1="5" :x2="intradayChart.width - 5" :y1="intradayChart.baselineY" :y2="intradayChart.baselineY" class="trend-baseline" />
-              <polyline v-if="intradayChart.averagePoints" :points="intradayChart.averagePoints" class="trend-average" />
-              <polyline :points="intradayChart.points" class="trend-price" :style="{ stroke: intradayChart.color }" />
-            </svg>
-            <div v-if="intradayTrend" class="intraday-axis"><span>09:30</span><span>11:30 / 13:00</span><span>15:00</span></div>
           </section>
         </div>
 
@@ -398,6 +427,6 @@
 
       window.setTimeout(showBootFailure, 12000);
     </script>
-    <script src="./src/app.bundle.js?v=20260714-boot-fix" onerror="showBootFailure()"></script>
+  <script src="./src/app.bundle.js?v=20260714-data-hover-fix" onerror="showBootFailure()"></script>
   </body>
 </html>

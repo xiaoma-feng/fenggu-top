@@ -17,7 +17,10 @@ on:
         description: "Optional statistics lookback days; default is 370"
         required: false
   schedule:
-    - cron: "30 7 * * 1-5"
+    - cron: "35 7 * * 1-5"
+    - cron: "5 8 * * 1-5"
+    - cron: "5 9 * * 1-5"
+    - cron: "5 10 * * 1-5"
 
 permissions:
   contents: write
@@ -45,6 +48,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Verify source encoding
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for path in Path("scripts").glob("*.py"):
+              path.read_text(encoding="utf-8")
+          print("Python source encoding is valid UTF-8")
+          PY
+
       - name: Update data
         run: |
           ARGS=""
@@ -54,7 +66,16 @@ jobs:
           if [ -n "${{ github.event.inputs.stats_lookback_days }}" ]; then
             ARGS="$ARGS --stats-lookback-days ${{ github.event.inputs.stats_lookback_days }}"
           fi
-          python scripts/update_data.py $ARGS --no-history-range
+          for attempt in 1 2 3; do
+            if python scripts/update_data.py $ARGS --no-history-range; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Data update failed, retrying in 60 seconds ($attempt/3)..."
+              sleep 60
+            fi
+          done
+          exit 1
 
       - name: Validate data
         run: python scripts/validate_data.py
