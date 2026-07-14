@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "峰股top",
     "trade_date": "2026-07-14",
-    "updated_at": "2026-07-14 23:15",
+    "updated_at": "2026-07-15 07:42",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -2232,7 +2232,7 @@
       "turnover_rate": 4.19998836517334,
       "first_limit_time": "13:55:20",
       "last_limit_time": "13:55:32",
-      "concept": "2026中报预增、中盘价值、中盘股、沪股通、中证500",
+      "concept": "2026中报预增、中盘价值、中盘股、昨日高振幅、昨日首板、沪股通、中证500",
       "industry": "工业金属",
       "seal_amount": 14243213,
       "consecutive_days": 1,
@@ -2246,10 +2246,12 @@
         "2026中报预增",
         "中盘价值",
         "中盘股",
+        "昨日高振幅",
+        "昨日首板",
         "沪股通",
         "中证500"
       ],
-      "theme": "2026中报预增、中盘价值、中盘股、沪股通、中证500"
+      "theme": "2026中报预增、中盘价值、中盘股、昨日高振幅、昨日首板、沪股通、中证500"
     },
     {
       "code": "603077",
@@ -3447,7 +3449,7 @@
       "amplitude": 12.528547286987305,
       "first_limit_time": "14:23:55",
       "open_times": 6,
-      "concept": "昨日高振幅",
+      "concept": "2026中报预增、昨日高振幅、昨日炸板、昨日触板",
       "industry": "化学制品",
       "reason": "",
       "limit_days_in_window": 0,
@@ -3455,9 +3457,12 @@
       "limit_stats": "0/0",
       "market_board": "主板",
       "themes": [
-        "昨日高振幅"
+        "2026中报预增",
+        "昨日高振幅",
+        "昨日炸板",
+        "昨日触板"
       ],
-      "theme": "昨日高振幅"
+      "theme": "2026中报预增、昨日高振幅、昨日炸板、昨日触板"
     }
   ],
   "limit_downs": [
@@ -32467,7 +32472,7 @@
       "code": "600595",
       "name": "中孚实业",
       "industry": "工业金属",
-      "theme": "2026中报预增、中盘价值、中盘股、沪股通、中证500",
+      "theme": "2026中报预增、中盘价值、中盘股、昨日高振幅、昨日首板、沪股通、中证500",
       "market_board": "主板",
       "limit_count_7d": 1,
       "limit_count_30d": 1,
@@ -45673,7 +45678,7 @@
       "code": "603255",
       "name": "鼎际得",
       "industry": "化学制品",
-      "theme": "昨日高振幅",
+      "theme": "2026中报预增、昨日高振幅、昨日炸板、昨日触板",
       "market_board": "主板",
       "limit_count_7d": 0,
       "limit_count_30d": 0,
