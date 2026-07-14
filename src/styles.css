@@ -1201,6 +1201,15 @@ td {
   font-weight: 800;
 }
 
+.down-industry-rank .panel-head h2::before {
+  background: var(--green);
+}
+
+.down-industry-rank .rank-list li::before,
+.down-industry-rank .rank-list strong {
+  color: var(--green);
+}
+
 .rank-list span {
   overflow: hidden;
   text-overflow: ellipsis;
