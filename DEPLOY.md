@@ -4,8 +4,8 @@
 
 - GitHub 用户名：`xiaoma-feng`
 - GitHub 仓库：`xiaoma-feng/fenggu-top`
-- 推荐访问地址：`https://fenggu.pages.dev`
-- 备选访问地址：`https://fenggu-top.pages.dev`
+- 主站地址：EdgeOne 部署后分配的永久 `*.edgeone.app` 地址
+- 备用地址：`https://xiaoma-feng.github.io/fenggu-top/`
 - 更新任务：每个交易日北京时间 15:30
 - GitHub Actions：已配置，可自动更新 `data/latest.json`
 
@@ -14,9 +14,35 @@
 - GitHub 仓库已经上传完成。
 - 数据自动更新任务已经跑通。
 - 远端数据已包含涨停、炸板、跌停、上市板块、题材排行等字段。
-- 现在只差 Cloudflare Pages 连接 GitHub 仓库并部署。
+- 现在只差 EdgeOne Makers 连接 GitHub 仓库并完成首次部署。
 
-## Cloudflare Pages 部署步骤
+## EdgeOne Makers 主站部署步骤
+
+1. 注册并完成腾讯云账号实名认证。
+2. 打开 EdgeOne Makers，选择“导入 Git 仓库”。
+3. 授权 GitHub 后选择 `xiaoma-feng/fenggu-top`。
+4. 项目名填写 `fenggu-top`，生产分支选择 `main`。
+5. 构建命令留空，输出目录填写 `.`，开始部署。
+6. 部署完成后记录平台分配的永久 `*.edgeone.app` 地址。
+7. 创建 KV 命名空间 `fenggu-feedback`，绑定变量名 `FENGGU_FEEDBACK`。
+8. 添加环境变量 `FEEDBACK_ADMIN_TOKEN`，然后重新部署一次。
+
+部署后检查这些地址：
+
+```text
+https://你的地址.edgeone.app/
+https://你的地址.edgeone.app/data/latest.json
+https://你的地址.edgeone.app/api/realtime?date=YYYY-MM-DD
+https://你的地址.edgeone.app/api/feedbacks
+```
+
+GitHub Pages 继续作为备用站：
+
+```text
+https://xiaoma-feng.github.io/fenggu-top/
+```
+
+## Cloudflare Pages 部署步骤（可选）
 
 1. 打开 Cloudflare 并登录。
 2. 进入左侧菜单 `Workers & Pages`。
@@ -93,5 +119,5 @@ http://localhost:8080
 ## 重要提醒
 
 - AKShare 是免费原型数据源，后续如果要更稳定，需要再接第二个数据源做对账。
-- 盘中实时数据通过 Cloudflare Pages Functions 的 `/api/realtime` 中转。
+- EdgeOne 主站的盘中实时数据通过 Edge Functions 的 `/api/realtime` 同源中转；GitHub Pages 会自动回退到现有免费行情源。
 - 15:30 后以 GitHub Actions 固化生成的 `data/latest.json` 为准。

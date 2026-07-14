@@ -1,6 +1,6 @@
 # 峰股top
 
-峰股top是一个零成本部署的A股涨停情绪数据中心。行情数据采用静态 JSON + Cloudflare Pages Functions；用户反馈使用 Cloudflare 免费 D1 保存，不需要购买服务器。
+峰股top是一个零成本部署的A股涨停情绪数据中心。主站使用腾讯 EdgeOne Makers，行情采用静态 JSON + Edge Functions；用户反馈可使用 EdgeOne KV 保存，不需要购买服务器。GitHub Pages 保留为备用站。
 
 ## 当前功能
 
@@ -67,7 +67,36 @@ GitHub Actions 的 cron 使用 UTC 时间，所以配置为：
 cron: "30 7 * * 1-5"
 ```
 
-## Cloudflare Pages 部署
+## EdgeOne Makers 部署（国内分享主站）
+
+1. 注册并登录腾讯云账号，进入 EdgeOne Makers。
+2. 选择“导入 Git 仓库”，授权并选择 `xiaoma-feng/fenggu-top`。
+3. 项目名使用 `fenggu-top`，生产分支使用 `main`。
+4. 这是根目录静态项目：构建命令留空，输出目录使用 `.`。
+5. 部署完成后使用平台分配的 `*.edgeone.app` HTTPS 地址。
+6. 后续 `main` 分支更新会自动触发 EdgeOne 重新部署。
+
+项目已经包含：
+
+- `edgeone.json`：静态资源和数据缓存策略。
+- `edge-functions/api/realtime.js`：东方财富实时行情同源中转。
+- `edge-functions/api/feedbacks*`：反馈、点赞和管理员删除接口。
+
+如需所有访问者共享反馈，在 EdgeOne 控制台创建 KV 命名空间并绑定：
+
+```text
+Variable name: FENGGU_FEEDBACK
+```
+
+同时添加管理员环境变量：
+
+```text
+FEEDBACK_ADMIN_TOKEN=自行设置的管理员密钥
+```
+
+KV 尚未绑定或接口暂时失败时，网页会自动使用浏览器本地反馈，不会卡在加载中。
+
+## Cloudflare Pages 部署（可选）
 
 1. 新建 GitHub 仓库，例如 `fenggu-top`
 2. 上传本项目所有文件

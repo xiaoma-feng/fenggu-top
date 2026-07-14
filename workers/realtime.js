@@ -97,7 +97,6 @@ async function fetchPool(endpoint, date, sort, pageSize = 10000) {
       "user-agent": "Mozilla/5.0",
       "referer": "https://quote.eastmoney.com/ztb/detail",
     },
-    cf: { cacheTtl: 45, cacheEverything: true },
   });
   if (!response.ok) throw new Error(`Eastmoney ${endpoint} ${response.status}`);
   const payload = await response.json();
@@ -174,6 +173,7 @@ function normalizeDown(item) {
     seal_amount: value(item.fund),
     open_times: value(item.oc),
     consecutive_days: Math.max(1, value(item.days, 1)),
+    consecutive_down_days: Math.max(1, value(item.days, 1)),
     industry: text(item.hybk),
     concept: "",
     reason: "",
@@ -223,7 +223,7 @@ export default {
           source: "eastmoney-worker",
           mode: "intraday",
           data_status: limitUps.length ? "ok" : "empty_or_failed",
-          notes: ["盘中实时数据来自东方财富专题接口，经 Cloudflare Worker 缓存约 45 秒。"],
+          notes: ["盘中实时数据来自东方财富专题接口，经同源边缘函数缓存约 45 秒。"],
           available_dates: [formatDate(date)],
         },
         sentiment: {

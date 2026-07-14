@@ -233,6 +233,12 @@ function shouldUseLocalFeedback() {
     || ["localhost", "127.0.0.1"].includes(window.location.hostname);
 }
 
+function shouldUseRealtimeProxy() {
+  return ["http:", "https:"].includes(window.location.protocol)
+    && !window.location.hostname.endsWith("github.io")
+    && !["localhost", "127.0.0.1"].includes(window.location.hostname);
+}
+
 createApp({
   setup() {
     const data = ref(window.__FENGGU_FALLBACK_DATA__ || emptyData);
@@ -292,6 +298,19 @@ createApp({
       const response = await fetch(path, { cache: "no-store", ...options });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return response.json();
+    }
+
+    async function fetchRealtimeSnapshot(date) {
+      if (shouldUseRealtimeProxy()) {
+        try {
+          const payload = await fetchJson(`./api/realtime?date=${encodeURIComponent(date)}`);
+          if (payload?.error) throw new Error(payload.message || payload.error);
+          return payload;
+        } catch (error) {
+          console.warn("同源实时接口不可用，切换到行情源直连", error);
+        }
+      }
+      return fetchRealtimePools(date);
     }
 
     function readLocalFeedbacks() {
@@ -414,7 +433,7 @@ createApp({
 
       if (await isTradingDay(today)) {
         try {
-          const livePayload = await fetchRealtimePools(today);
+          const livePayload = await fetchRealtimeSnapshot(today);
           if (hasMarketRows(livePayload)) {
             updateData(currentSessionPayload(
               livePayload,
@@ -442,7 +461,7 @@ createApp({
       if (historicalDateLocked.value) return;
       try {
         const today = shanghaiDateText();
-        const payload = await fetchRealtimePools(today);
+        const payload = await fetchRealtimeSnapshot(today);
         updateData(currentSessionPayload(payload, "intraday"));
         realtimeStatus.value = marketPhase() === "settling" ? "等待收盘固化" : "盘中实时";
         loadError.value = "";

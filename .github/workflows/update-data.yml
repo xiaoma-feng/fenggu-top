@@ -5,6 +5,15 @@ on:
     branches:
       - main
     paths:
+      - "index.html"
+      - "latest.html"
+      - "src/**"
+      - "workers/**"
+      - "functions/**"
+      - "edge-functions/**"
+      - "edgeone.json"
+      - "_headers"
+      - "data/**"
       - "scripts/*.py"
       - "requirements.txt"
       - ".github/workflows/update-data.yml"

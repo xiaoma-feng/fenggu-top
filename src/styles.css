@@ -1416,6 +1416,10 @@ td {
     margin-bottom: 12px;
   }
 
+  .resizable-panel {
+    width: 100% !important;
+  }
+
   .panel-head {
     align-items: flex-start;
     flex-wrap: wrap;
