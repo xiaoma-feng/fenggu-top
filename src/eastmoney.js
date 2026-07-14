@@ -247,6 +247,7 @@ function parseTencentTrend(payload, symbol, normalizedCode) {
     code: normalizedCode,
     name: quote[1] || "",
     preClose: numberValue(quote[4], points[0]?.price),
+    source: "腾讯行情备用",
     points,
   };
 }
@@ -281,6 +282,7 @@ function parseEastmoneyTrend(payload, normalizedCode) {
     code: normalizedCode,
     name: source.name || "",
     preClose: numberValue(source.preClose),
+    source: "东方财富实时行情",
     points,
   };
 }
@@ -308,12 +310,12 @@ async function fetchEastmoneyTrend(normalizedCode) {
 export async function fetchIntradayTrend(code) {
   const normalizedCode = String(code || "").padStart(6, "0");
   try {
-    return await fetchTencentTrend(normalizedCode);
-  } catch (tencentError) {
+    return await fetchEastmoneyTrend(normalizedCode);
+  } catch (eastmoneyError) {
     try {
-      return await fetchEastmoneyTrend(normalizedCode);
-    } catch (eastmoneyError) {
-      throw new AggregateError([tencentError, eastmoneyError], "暂无今日分时数据");
+      return await fetchTencentTrend(normalizedCode);
+    } catch (tencentError) {
+      throw new AggregateError([eastmoneyError, tencentError], "暂无今日分时数据");
     }
   }
 }

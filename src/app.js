@@ -466,6 +466,9 @@ createApp({
       const today = shanghaiDateText();
       if (phase === "intraday" && !historicalDateLocked.value) {
         await loadRealtimeData();
+        if (!refreshPaused.value && hoveredStock.value?.code) {
+          await loadStockIntraday(hoveredStock.value.code, true);
+        }
         return;
       }
       if (phase === "settling" && !historicalDateLocked.value) {
@@ -536,16 +539,25 @@ createApp({
         if (date === today) {
           historicalDateLocked.value = false;
           selectedDate.value = date;
-          await refreshForTime();
+          lastClosedRefreshAt = 0;
+          if (marketPhase() === "midday") {
+            await loadRealtimeData();
+            realtimeStatus.value = "午间暂停刷新";
+          } else {
+            await refreshForTime();
+          }
           clearFilters();
           return;
         }
         historicalDateLocked.value = true;
         updateData(todayEmptyPayload(date, "loading"));
         realtimeStatus.value = "数据切换中";
-        const payload = await fetchJson(`./data/history/${date}.json`);
+        const payload = await fetchJson(`./data/history/${date}.json?v=${Date.now()}`);
+        if (payload?.meta?.trade_date !== date || payload?.meta?.data_status === "empty_or_failed") {
+          throw new Error("HISTORY_DATA_MISSING");
+        }
         updateData(payload);
-        selectedDate.value = data.value.meta.trade_date || date;
+        selectedDate.value = date;
         realtimeStatus.value = "历史数据";
         clearFilters();
       } catch (error) {

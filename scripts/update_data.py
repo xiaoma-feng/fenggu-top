@@ -511,7 +511,8 @@ def load_history():
     for path in sorted(HISTORY_DIR.glob("*.json")):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            print(f"skip unreadable history archive: {path.name}: {error}")
             continue
         trade_date = payload.get("meta", {}).get("trade_date") or path.stem
         for stock in payload.get("limit_ups", []):
