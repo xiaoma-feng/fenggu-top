@@ -1220,6 +1220,19 @@ td {
   color: var(--green);
 }
 
+.down-industry-rank .rank-list .rank-empty {
+  counter-increment: none;
+}
+
+.down-industry-rank .rank-list .rank-empty::before {
+  color: var(--green);
+  content: "-";
+}
+
+.down-industry-rank .rank-list .rank-empty span {
+  color: var(--muted);
+}
+
 .rank-list span {
   overflow: hidden;
   text-overflow: ellipsis;

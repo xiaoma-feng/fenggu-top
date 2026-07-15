@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="峰股top - A股涨停情绪数据中心" />
     <title>峰股top | A股涨停情绪数据中心</title>
-  <link rel="stylesheet" href="./src/styles.css?v=20260715-mobile-v2" />
+  <link rel="stylesheet" href="./src/styles.css?v=20260715-down-rank-v1" />
   </head>
   <body>
     <div id="app" v-cloak>
@@ -274,12 +274,23 @@
               </ol>
             </article>
 
-            <article class="panel down-industry-rank">
+            <article
+              :key="'down-industry-' + (data.meta.trade_date || selectedDate || todayText)"
+              class="panel down-industry-rank"
+              :data-trade-date="data.meta.trade_date || selectedDate || todayText"
+              aria-label="行业跌停排行"
+            >
               <div class="panel-head"><h2>行业跌停排行</h2></div>
-              <ol class="rank-list">
-                <li v-for="item in downIndustryRank.slice(0, 8)" :key="item.name">
-                  <span>{{ item.name }}</span>
-                  <strong>{{ item.count }}只</strong>
+              <ol class="rank-list" aria-live="polite">
+                <template v-if="downIndustryRank.length">
+                  <li v-for="item in downIndustryRank.slice(0, 8)" :key="item.name">
+                    <span>{{ item.name }}</span>
+                    <strong>{{ item.count }}只</strong>
+                  </li>
+                </template>
+                <li v-else class="rank-empty">
+                  <span>当日暂无跌停行业数据</span>
+                  <strong>0只</strong>
                 </li>
               </ol>
             </article>
@@ -459,6 +470,6 @@
 
       window.setTimeout(showBootFailure, 12000);
     </script>
-  <script src="./src/app.bundle.js?v=20260715-mobile-v2" onerror="showBootFailure()"></script>
+  <script src="./src/app.bundle.js?v=20260715-down-rank-v1" onerror="showBootFailure()"></script>
   </body>
 </html>

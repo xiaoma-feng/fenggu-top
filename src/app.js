@@ -773,7 +773,12 @@ createApp({
       return [...merged.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
     });
     const themeRank = computed(() => rankByField(limitUps.value, "theme"));
-    const downIndustryRank = computed(() => rankByField(limitDowns.value, "industry"));
+    const downIndustryRank = computed(() =>
+      rankByField(
+        limitDowns.value.filter((stock) => normalizeIndustry(stock?.industry)),
+        "industry",
+      ),
+    );
     const highestBoardRank = computed(() => [...limitUps.value].sort((a, b) => numberValue(b.consecutive_days, 1) - numberValue(a.consecutive_days, 1)).slice(0, 6));
     const promotedStocks = computed(() => data.value.sentiment.promoted_stocks || []);
     const dataCompleteness = computed(() => [
