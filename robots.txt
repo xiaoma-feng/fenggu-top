@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://xiaoma-feng.github.io/fenggu-top/sitemap.xml

@@ -89,11 +89,14 @@ jobs:
       - name: Validate data
         run: python scripts/validate_data.py
 
+      - name: Generate SEO sitemap
+        run: python scripts/generate_sitemap.py
+
       - name: Commit data files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update market data"
-          file_pattern: "data/*.json data/history/*.json"
+          file_pattern: "data/*.json data/history/*.json sitemap.xml"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
