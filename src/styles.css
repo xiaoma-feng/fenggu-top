@@ -918,7 +918,76 @@ td {
   display: flex;
   gap: 8px;
   min-width: 0;
-  padding: 8px 0ﬂø-¢Gß≤⁄Óù∆≠y–grid;
+  padding: 8px 0 11px;
+}
+
+.popover-tags span {
+  background: rgba(51, 65, 98, 0.24);
+  border: 1px solid rgba(126, 151, 190, 0.16);
+  border-radius: 4px;
+  color: #cbd6e8;
+  font-size: 12px;
+  line-height: 24px;
+  overflow: hidden;
+  padding: 0 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.popover-tags .board-tag {
+  border-color: rgba(255, 107, 124, 0.32);
+  color: #ff96a3;
+  flex: 0 0 auto;
+}
+
+.popover-tags .theme-tag {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.popover-primary {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(190px, 0.75fr);
+  padding-top: 13px;
+}
+
+.popover-section-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.popover-section-head strong {
+  color: #dfe7f5;
+  font-size: 13px;
+}
+
+.market-snapshot {
+  border-left: 1px solid rgba(126, 151, 190, 0.14);
+  min-width: 0;
+  padding-left: 14px;
+}
+
+.stock-popover dl {
+  margin: 0;
+}
+
+.stock-popover dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.stock-popover dd {
+  color: #eef3fb;
+  font-size: 15px;
+  font-weight: 800;
+  margin: 4px 0 0;
+}
+
+.snapshot-grid {
+  display: grid;
   gap: 0;
 }
 
