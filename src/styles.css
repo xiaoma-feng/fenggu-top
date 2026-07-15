@@ -513,6 +513,11 @@ button {
   position: relative;
 }
 
+.right-rail.resizable-panel {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .table-panel {
   height: 460px;
 }
