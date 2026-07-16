@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "峰股top",
     "trade_date": "2026-07-16",
-    "updated_at": "2026-07-16 18:09",
+    "updated_at": "2026-07-16 19:06",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -3334,7 +3334,7 @@
       "turnover_rate": 1.7752925157546997,
       "seal_amount": 213047427,
       "last_limit_time": "09:31:41",
-      "board_turnover_amount": 2169687343,
+      "board_turnover_amount": 2169193430,
       "consecutive_days": 2,
       "consecutive_down_days": 2,
       "open_times": 0,
