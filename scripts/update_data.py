@@ -894,7 +894,7 @@ def build_history_payload(
     total_for_rate = len(limit_ups) + broken_count
     return {
         "meta": {
-            "site_name": "峰股top",
+            "site_name": "锋股top",
             "trade_date": trade_date,
             "updated_at": now.strftime("%Y-%m-%d %H:%M"),
             "market_data_ready_time": "15:30",
@@ -992,7 +992,7 @@ def build_payload(
 
     return {
         "meta": {
-            "site_name": "峰股top",
+            "site_name": "锋股top",
             "trade_date": trade_date,
             "updated_at": now.strftime("%Y-%m-%d %H:%M"),
             "market_data_ready_time": "15:30",

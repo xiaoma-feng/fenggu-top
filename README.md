@@ -1,6 +1,6 @@
-# 峰股top
+# 锋股top
 
-峰股top是一个零成本部署的A股涨停情绪数据中心。主站使用腾讯 EdgeOne Makers，行情采用静态 JSON + Edge Functions；用户反馈可使用 EdgeOne KV 保存，不需要购买服务器。GitHub Pages 保留为备用站。
+锋股top是一个零成本部署的A股涨停情绪数据中心。主站使用腾讯 EdgeOne Makers，行情采用静态 JSON + Edge Functions；用户反馈可使用 EdgeOne KV 保存，不需要购买服务器。GitHub Pages 保留为备用站。
 
 ## 当前功能
 

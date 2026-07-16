@@ -216,7 +216,7 @@ export default {
       const totalForBrokenRate = limitUps.length + broken.length;
       return jsonResponse({
         meta: {
-          site_name: "峰股top",
+          site_name: "锋股top",
           trade_date: formatDate(date),
           updated_at: new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }),
           market_data_ready_time: "15:30",

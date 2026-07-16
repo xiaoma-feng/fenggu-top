@@ -155,7 +155,7 @@ function todayEmptyPayload(dateText, status = "waiting") {
   return {
     ...emptyData,
     meta: {
-      site_name: "峰股top",
+      site_name: "锋股top",
       trade_date: dateText,
       updated_at: new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }),
       market_data_ready_time: "15:30",
@@ -183,7 +183,7 @@ function missingDatePayload(dateText, message = "暂无历史数据") {
   return {
     ...emptyData,
     meta: {
-      site_name: "峰股top",
+      site_name: "锋股top",
       trade_date: dateText,
       updated_at: new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }),
       source: "history-missing",
@@ -998,7 +998,7 @@ createApp({
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `峰股top-${section.title}-${data.value.meta.trade_date || "latest"}.csv`;
+      link.download = `锋股top-${section.title}-${data.value.meta.trade_date || "latest"}.csv`;
       document.body.appendChild(link);
       link.click();
       link.remove();
