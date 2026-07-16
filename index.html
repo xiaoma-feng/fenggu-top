@@ -12,10 +12,14 @@
       name="keywords"
       content="锋股top,锋股,今日涨停,涨停股票排行榜,A股涨停,连板数据,行业题材,炸板数据,热门板块,A股复盘"
     />
+    <meta name="author" content="锋股top" />
+    <meta name="theme-color" content="#070b15" />
+    <meta name="format-detection" content="telephone=no" />
     <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
     <link rel="canonical" href="https://xiaoma-feng.github.io/fenggu-top/" />
     <link rel="alternate" hreflang="zh-CN" href="https://xiaoma-feng.github.io/fenggu-top/" />
     <link rel="sitemap" type="application/xml" title="Sitemap" href="./sitemap.xml" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
 
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_CN" />
@@ -28,10 +32,10 @@
     <meta property="og:url" content="https://xiaoma-feng.github.io/fenggu-top/" />
     <meta
       property="og:image"
-      content="https://xiaoma-feng.github.io/fenggu-top/23f51dca-6dff-46e9-adbc-b3121d5b1b8f.png"
+      content="https://xiaoma-feng.github.io/fenggu-top/social-preview.png"
     />
-    <meta property="og:image:width" content="1536" />
-    <meta property="og:image:height" content="1024" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="锋股top A股涨停数据分析平台界面" />
 
     <meta name="twitter:card" content="summary_large_image" />
@@ -42,7 +46,7 @@
     />
     <meta
       name="twitter:image"
-      content="https://xiaoma-feng.github.io/fenggu-top/23f51dca-6dff-46e9-adbc-b3121d5b1b8f.png"
+      content="https://xiaoma-feng.github.io/fenggu-top/social-preview.png"
     />
 
     <script type="application/ld+json">
@@ -50,13 +54,23 @@
         "@context": "https://schema.org",
         "@graph": [
           {
+            "@type": "Organization",
+            "@id": "https://xiaoma-feng.github.io/fenggu-top/#organization",
+            "name": "锋股top",
+            "url": "https://xiaoma-feng.github.io/fenggu-top/",
+            "logo": "https://xiaoma-feng.github.io/fenggu-top/favicon.svg"
+          },
+          {
             "@type": "WebSite",
             "@id": "https://xiaoma-feng.github.io/fenggu-top/#website",
             "url": "https://xiaoma-feng.github.io/fenggu-top/",
             "name": "锋股top",
             "alternateName": "锋股Top",
             "description": "锋股top提供每日A股涨停股票排行、连板高度统计、行业题材涨停分析、炸板数据查询、热门板块分析，帮助用户快速了解市场热点。",
-            "inLanguage": "zh-CN"
+            "inLanguage": "zh-CN",
+            "publisher": {
+              "@id": "https://xiaoma-feng.github.io/fenggu-top/#organization"
+            }
           },
           {
             "@type": "Dataset",
@@ -68,9 +82,10 @@
             "isAccessibleForFree": true,
             "keywords": ["A股涨停", "涨停股票排行", "连板数据", "炸板数据", "行业题材"],
             "creator": {
-              "@type": "Organization",
-              "name": "锋股top",
-              "url": "https://xiaoma-feng.github.io/fenggu-top/"
+              "@id": "https://xiaoma-feng.github.io/fenggu-top/#organization"
+            },
+            "publisher": {
+              "@id": "https://xiaoma-feng.github.io/fenggu-top/#organization"
             },
             "distribution": {
               "@type": "DataDownload",
@@ -93,7 +108,21 @@
         ]
       }
     </script>
-    <link rel="stylesheet" href="./src/styles.css?v=20260715-down-rank-v1" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260716-seo-v1" />
+    <script>
+      function showBootFailure() {
+        var app = document.getElementById("app");
+        var status = document.getElementById("boot-status");
+        if (!app || !status || !app.hasAttribute("v-cloak")) return;
+        status.innerHTML =
+          '<span>页面加载失败，请检查网络后</span>' +
+          '<button type="button" onclick="location.reload()">重新加载</button>';
+        status.classList.add("boot-failed");
+      }
+
+      window.setTimeout(showBootFailure, 12000);
+    </script>
+    <script defer src="./src/app.bundle.js?v=20260716-seo-v1" onerror="showBootFailure()"></script>
   </head>
   <body>
     <div id="app" v-cloak>
@@ -543,21 +572,36 @@
       </main>
     </div>
 
-    <div id="boot-status" role="status">页面加载中...</div>
+    <!-- SEO_FALLBACK_START -->
+    <noscript>
+      <style>#boot-status{display:none!important}</style>
+      <main class="seo-fallback">
+        <header>
+          <p class="seo-eyebrow">A股涨停情绪数据中心</p>
+          <h1>锋股top - 2026年7月16日A股涨停股票排行榜</h1>
+          <p>收盘涨停42只，炸板25只，跌停33只，连板高度5板。</p>
+          <p><a href="./news/2026-07-16/">查看2026年7月16日完整涨停复盘</a>　<a href="./news/">浏览每日复盘归档</a></p>
+        </header>
+        <section class="seo-fallback-grid" aria-label="收盘统计">
+          <article><strong>42</strong><span>今日涨停股票</span></article>
+          <article><strong>25</strong><span>炸板统计</span></article>
+          <article><strong>33</strong><span>收盘跌停</span></article>
+          <article><strong>5板</strong><span>连板高度</span></article>
+        </section>
+        <section><h2>今日涨停股票排行</h2><ol><li><strong>哈药股份</strong>（600664）5板，化学制药</li><li><strong>云创退</strong>（920305）4板，IT服务Ⅱ</li><li><strong>艾艾精工</strong>（603580）3板，塑料</li><li><strong>海南海药</strong>（000566）2板，化学制药</li><li><strong>智度股份</strong>（000676）2板，广告营销</li><li><strong>新华百货</strong>（600785）2板，一般零售</li><li><strong>儒意电影</strong>（002739）2板，影视院线</li><li><strong>永安药业</strong>（002365）2板，化学制药</li><li><strong>南华生物</strong>（000504）2板，医疗服务</li><li><strong>香江控股</strong>（600162）2板，房地产开</li></ol></section>
+        <section class="seo-fallback-columns">
+          <div><h2>行业涨停排行</h2><ol class="ranking"><li><span>1</span><strong>消费电子</strong><em>5只</em></li><li><span>2</span><strong>塑料</strong><em>3只</em></li><li><span>3</span><strong>化学制药</strong><em>3只</em></li><li><span>4</span><strong>影视院线</strong><em>3只</em></li><li><span>5</span><strong>医疗服务</strong><em>3只</em></li></ol></div>
+          <div><h2>题材涨停排行</h2><ol class="ranking"><li><span>1</span><strong>央国企改革</strong><em>14只</em></li><li><span>2</span><strong>华为概念</strong><em>13只</em></li><li><span>3</span><strong>人工智能</strong><em>8只</em></li><li><span>4</span><strong>机器人概念</strong><em>7只</em></li><li><span>5</span><strong>虚拟现实</strong><em>6只</em></li></ol></div>
+        </section>
+        <p class="seo-disclaimer">数据来自公开行情接口，仅供信息参考，不构成投资建议。</p>
+      </main>
+    </noscript>
+    <!-- SEO_FALLBACK_END -->
 
-    <script>
-      function showBootFailure() {
-        var app = document.getElementById("app");
-        var status = document.getElementById("boot-status");
-        if (!app || !status || !app.hasAttribute("v-cloak")) return;
-        status.innerHTML =
-          '<span>页面加载失败，请检查网络后</span>' +
-          '<button type="button" onclick="location.reload()">重新加载</button>';
-        status.classList.add("boot-failed");
-      }
+    <div id="boot-status" role="status">
+      <strong>锋股top A股涨停情绪数据中心</strong>
+      <span>行情数据加载中...</span>
+    </div>
 
-      window.setTimeout(showBootFailure, 12000);
-    </script>
-  <script src="./src/app.bundle.js?v=20260716-brand-v1" onerror="showBootFailure()"></script>
   </body>
 </html>

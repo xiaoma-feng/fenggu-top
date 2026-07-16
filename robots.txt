@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
 
+User-agent: Bingbot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
 Sitemap: https://xiaoma-feng.github.io/fenggu-top/sitemap.xml
