@@ -108,7 +108,7 @@
         ]
       }
     </script>
-    <link rel="stylesheet" href="./src/styles.css?v=20260716-seo-v1" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260717-responsive-v1" />
     <script>
       function showBootFailure() {
         var app = document.getElementById("app");
@@ -122,7 +122,7 @@
 
       window.setTimeout(showBootFailure, 12000);
     </script>
-    <script defer src="./src/app.bundle.js?v=20260716-seo-v1" onerror="showBootFailure()"></script>
+    <script defer src="./src/app.bundle.js?v=20260717-responsive-v1" onerror="showBootFailure()"></script>
   </head>
   <body>
     <div id="app" v-cloak>
@@ -135,16 +135,19 @@
           </div>
         </div>
 
-        <nav class="side-nav" aria-label="主导航">
-          <button
-            v-for="item in navItems"
-            :key="item.key"
-            :class="{ active: activeSection === item.key }"
-            @click="scrollToSection(item)"
-          >
-            {{ item.label }}
-          </button>
-        </nav>
+        <details class="mobile-nav">
+          <summary>导航菜单</summary>
+          <nav class="side-nav" aria-label="主导航">
+            <button
+              v-for="item in navItems"
+              :key="item.key"
+              :class="{ active: activeSection === item.key }"
+              @click="scrollToSection(item)"
+            >
+              {{ item.label }}
+            </button>
+          </nav>
+        </details>
 
         <section class="sidebar-feedback resizable-panel" :style="panelStyle('feedback-panel')">
           <div class="sidebar-feedback-head">

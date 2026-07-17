@@ -1014,7 +1014,7 @@ createApp({
     function panelStyle(id) {
       const size = panelSizes.value[id] || {};
       return {
-        width: size.width ? `${size.width}px` : undefined,
+        width: size.width ? `min(${size.width}px, 100%)` : undefined,
         height: size.height ? `${size.height}px` : undefined,
       };
     }
@@ -1052,10 +1052,13 @@ createApp({
       const startY = event.clientY;
       const startWidth = panel.offsetWidth;
       const startHeight = panel.offsetHeight;
+      const availableWidth = panel.parentElement?.clientWidth || window.innerWidth;
       function onMove(moveEvent) {
         const current = panelSizes.value[id] || {};
         const next = { ...current };
-        if (axis === "x") next.width = Math.max(320, startWidth + moveEvent.clientX - startX);
+        if (axis === "x") {
+          next.width = Math.min(availableWidth, Math.max(320, startWidth + moveEvent.clientX - startX));
+        }
         if (axis === "y") next.height = Math.max(id === "feedback-panel" ? 140 : 260, startHeight + moveEvent.clientY - startY);
         panelSizes.value = { ...panelSizes.value, [id]: next };
       }

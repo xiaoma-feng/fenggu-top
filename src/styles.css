@@ -1,5 +1,8 @@
 html {
+  max-width: 100%;
+  overflow-x: hidden;
   scroll-behavior: smooth;
+  width: 100%;
 }
 
 :root {
@@ -24,6 +27,10 @@ html {
 
 body {
   margin: 0;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  width: 100%;
   background:
     radial-gradient(circle at 72% 8%, rgba(45, 98, 181, 0.22), transparent 32rem),
     linear-gradient(135deg, #050812 0%, #0b1221 55%, #080b14 100%);
@@ -85,8 +92,11 @@ button {
 
 #app {
   display: grid;
-  grid-template-columns: 238px minmax(0, 1fr);
+  grid-template-columns: 168px minmax(0, 1fr);
+  max-width: 100%;
+  min-width: 0;
   min-height: 100vh;
+  width: 100%;
 }
 
 .sidebar {
@@ -95,16 +105,20 @@ button {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  padding: 26px 18px;
+  max-width: 168px;
+  min-width: 0;
+  padding: 22px 12px;
   position: sticky;
   top: 0;
+  width: 168px;
 }
 
 .brand {
   align-items: center;
   display: flex;
-  gap: 14px;
+  gap: 9px;
   margin-bottom: 26px;
+  min-width: 0;
 }
 
 .brand-mark {
@@ -114,13 +128,14 @@ button {
   display: grid;
   font-size: 22px;
   font-weight: 900;
-  height: 46px;
+  flex: 0 0 auto;
+  height: 38px;
   place-items: center;
-  width: 46px;
+  width: 38px;
 }
 
 .brand h1 {
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1;
   margin: 0 0 8px;
 }
@@ -133,8 +148,17 @@ button {
 }
 
 .brand p {
-  font-size: 13px;
+  font-size: 11px;
+  line-height: 1.4;
   margin: 0;
+}
+
+.mobile-nav > summary {
+  display: none;
+}
+
+.mobile-nav:not([open]) > .side-nav {
+  display: grid;
 }
 
 .side-nav {
@@ -165,8 +189,10 @@ button {
 }
 
 .shell {
+  max-width: 100%;
   min-width: 0;
   padding: 0 18px 28px;
+  width: 100%;
 }
 
 .topbar {
@@ -176,6 +202,8 @@ button {
   gap: 16px;
   min-height: 84px;
   justify-content: space-between;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .tabs {
@@ -200,7 +228,10 @@ button {
 .top-tools {
   align-items: center;
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .search,
@@ -217,10 +248,14 @@ button {
 }
 
 .search {
+  flex: 0 1 270px;
+  max-width: 100%;
   width: 270px;
 }
 
 .date-picker {
+  flex: 0 1 168px;
+  max-width: 100%;
   width: 168px;
 }
 
@@ -314,7 +349,7 @@ button {
 .metric-grid {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(154px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   margin: 16px 0 14px;
 }
 
@@ -428,16 +463,21 @@ button {
 }
 
 .theme-cell {
-  line-height: 1.45;
-  max-width: 300px;
-  white-space: normal;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 280px;
 }
 
 .content-grid {
   align-items: start;
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  grid-template-columns: minmax(0, 1fr) 220px;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
 }
 
 .main-stack,
@@ -452,9 +492,11 @@ button {
   overflow: auto;
   position: sticky;
   top: 96px;
+  width: 100%;
 }
 
 .panel {
+  max-width: 100%;
   min-width: 0;
   padding: 16px;
 }
@@ -706,13 +748,18 @@ body.is-resizing-y {
 
 .table-wrap {
   height: calc(100% - 52px);
-  overflow: auto;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+  width: 100%;
 }
 
 table {
   border-collapse: collapse;
-  min-width: 1380px;
-  width: 100%;
+  max-width: none;
+  min-width: 100%;
+  width: max-content;
 }
 
 th,
@@ -1401,7 +1448,42 @@ td {
   opacity: 0.65;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1400px) {
+  .content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .main-stack > .table-panel,
+  .right-rail {
+    width: 100% !important;
+  }
+
+  .right-rail {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    height: auto !important;
+    max-height: none;
+    overflow: visible;
+    position: static;
+  }
+
+  .right-rail > .panel {
+    margin: 0;
+  }
+
+  .right-rail > .resize-handle {
+    display: none;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    height: auto;
+    padding: 14px 0;
+  }
+}
+
+@media (max-width: 999px) {
   html,
   body,
   #app {
@@ -1425,24 +1507,48 @@ td {
     margin-bottom: 14px;
   }
 
-  .side-nav {
-    display: flex;
-    gap: 6px;
-    max-width: 100%;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
+  .mobile-nav {
+    width: 100%;
   }
 
-  .side-nav::-webkit-scrollbar {
+  .mobile-nav > summary {
+    align-items: center;
+    background: rgba(96, 119, 162, 0.2);
+    border: 1px solid rgba(121, 146, 184, 0.18);
+    border-radius: 7px;
+    color: #eef4ff;
+    cursor: pointer;
+    display: flex;
+    font-weight: 700;
+    justify-content: space-between;
+    min-height: 38px;
+    padding: 0 12px;
+  }
+
+  .mobile-nav > summary::after {
+    content: "+";
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .mobile-nav[open] > summary::after {
+    content: "-";
+  }
+
+  .mobile-nav:not([open]) > .side-nav {
     display: none;
   }
 
+  .mobile-nav[open] > .side-nav {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    margin-top: 8px;
+    max-width: 100%;
+  }
+
   .side-nav button {
-    flex: 0 0 auto;
     padding: 9px 11px;
-    white-space: nowrap;
   }
 
   .source-note {
@@ -1517,10 +1623,6 @@ td {
     -webkit-overflow-scrolling: touch;
   }
 
-  table {
-    min-width: 1180px;
-  }
-
   th,
   td {
     padding: 10px 8px;
@@ -1576,6 +1678,7 @@ td {
 
   .right-rail {
     gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     max-height: none;
     overflow: visible;
     position: static;
@@ -1820,6 +1923,7 @@ td {
 
   .right-rail {
     gap: 10px;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .rank-list li {
