@@ -15,7 +15,7 @@ INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow"
 INDEXNOW_KEY = "8b00f36f35c44d7594da3a76b00677d4"
 KEY_LOCATION = f"{SITE_ROOT}{INDEXNOW_KEY}.txt"
 SITEMAP_NAMESPACE = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-DAILY_PAGE_RE = re.compile(r"/news/\d{4}-\d{2}-\d{2}/$")
+DAILY_PAGE_RE = re.compile(r"/(?:limit-up|review)/\d{4}-\d{2}-\d{2}/$")
 
 
 def read_sitemap(source: str | None) -> bytes:
@@ -41,9 +41,17 @@ def sitemap_urls(content: bytes) -> list[str]:
 
 def changed_urls(urls: list[str]) -> list[str]:
     daily = sorted(url for url in urls if DAILY_PAGE_RE.search(url))
-    selected = [SITE_ROOT, f"{SITE_ROOT}news/"]
+    selected = [
+        SITE_ROOT,
+        f"{SITE_ROOT}limit-up/",
+        f"{SITE_ROOT}review/",
+        f"{SITE_ROOT}stock/",
+        f"{SITE_ROOT}industry/",
+        f"{SITE_ROOT}theme/",
+    ]
     if daily:
-        selected.append(daily[-1])
+        latest_date = max(url.rstrip("/").rsplit("/", 1)[-1] for url in daily)
+        selected.extend(url for url in daily if f"/{latest_date}/" in url)
     return [url for url in selected if url in urls]
 
 

@@ -11,7 +11,11 @@ on:
       - "social-preview.png"
       - "robots.txt"
       - "sitemap.xml"
-      - "news/**"
+      - "stock/**"
+      - "industry/**"
+      - "theme/**"
+      - "limit-up/**"
+      - "review/**"
       - "8b00f36f35c44d7594da3a76b00677d4.txt"
       - "src/**"
       - "workers/**"
@@ -95,17 +99,23 @@ jobs:
       - name: Validate data
         run: python scripts/validate_data.py
 
+      - name: Update full A-share stock catalog
+        run: python scripts/update_stock_catalog.py || python scripts/update_stock_catalog.py --offline
+
       - name: Generate static SEO pages
         run: python scripts/generate_seo_pages.py
 
       - name: Generate SEO sitemap
         run: python scripts/generate_sitemap.py
 
+      - name: Validate static SEO pages
+        run: python scripts/validate_seo_pages.py
+
       - name: Commit data and SEO files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update market data"
-          file_pattern: "data/*.json data/history/*.json index.html news/** sitemap.xml"
+          file_pattern: "data/latest.json data/eastmoney-theme-cache.json data/history/*.json data/seo-manifest.json index.html news/** sitemap.xml"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

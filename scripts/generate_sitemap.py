@@ -2,67 +2,97 @@ from __future__ import annotations
 
 import json
 from datetime import date
-from html import escape
 from pathlib import Path
+from urllib.parse import quote
+from xml.sax.saxutils import escape
 
 
 ROOT = Path(__file__).resolve().parents[1]
-LATEST_DATA = ROOT / "data" / "latest.json"
-NEWS_DIR = ROOT / "news"
+DATA_DIR = ROOT / "data"
+LATEST_PATH = DATA_DIR / "latest.json"
+MANIFEST_PATH = DATA_DIR / "seo-manifest.json"
 SITEMAP_PATH = ROOT / "sitemap.xml"
-SITE_URL = "https://xiaoma-feng.github.io/fenggu-top/"
+SITE_ROOT = "https://xiaoma-feng.github.io/fenggu-top/"
+PAGE_ROOTS = ("stock", "industry", "theme", "limit-up", "review")
+SITEMAP_LIMIT = 50_000
+
+
+def read_json(path: Path) -> dict:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return value if isinstance(value, dict) else {}
 
 
 def latest_trade_date() -> str:
+    payload = read_json(LATEST_PATH)
+    value = str((payload.get("meta") or {}).get("trade_date") or "")
     try:
-        payload = json.loads(LATEST_DATA.read_text(encoding="utf-8"))
-        value = str(payload.get("meta", {}).get("trade_date", "")).strip()
         date.fromisoformat(value)
-        return value
-    except (FileNotFoundError, ValueError, TypeError, json.JSONDecodeError):
+    except ValueError:
         return date.today().isoformat()
+    return value
 
 
-def daily_pages() -> list[tuple[str, str]]:
-    pages: list[tuple[str, str]] = []
-    if not NEWS_DIR.exists():
-        return pages
-    for path in sorted(NEWS_DIR.glob("????-??-??/index.html")):
-        try:
-            date.fromisoformat(path.parent.name)
-        except ValueError:
+def page_urls() -> list[tuple[str, str]]:
+    latest = latest_trade_date()
+    pages: list[tuple[str, str]] = [(SITE_ROOT, latest)]
+    for root_name in PAGE_ROOTS:
+        root = ROOT / root_name
+        if not root.exists():
             continue
-        pages.append((f"{SITE_URL}news/{path.parent.name}/", path.parent.name))
-    return pages
+        for page in sorted(root.rglob("index.html")):
+            relative = page.parent.relative_to(ROOT).as_posix().strip("/")
+            encoded = quote(relative, safe="/-._~")
+            last_modified = latest
+            if root_name in {"limit-up", "review"}:
+                candidate = page.parent.name
+                try:
+                    date.fromisoformat(candidate)
+                except ValueError:
+                    pass
+                else:
+                    last_modified = candidate
+            pages.append((f"{SITE_ROOT}{encoded}/", last_modified))
+    unique: dict[str, str] = {}
+    for location, last_modified in pages:
+        unique[location] = last_modified
+    return sorted(unique.items(), key=lambda item: (item[0] != SITE_ROOT, item[0]))
 
 
-def url_entry(location: str, last_modified: str) -> str:
-    return (
-        "  <url>\n"
-        f"    <loc>{escape(location)}</loc>\n"
-        f"    <lastmod>{escape(last_modified)}</lastmod>\n"
-        "  </url>"
+def build_sitemap() -> tuple[str, int]:
+    pages = page_urls()
+    if len(pages) > SITEMAP_LIMIT:
+        raise RuntimeError(f"sitemap has {len(pages)} URLs; split it before exceeding {SITEMAP_LIMIT}")
+    entries = "\n".join(
+        f"  <url><loc>{escape(location)}</loc><lastmod>{last_modified}</lastmod></url>"
+        for location, last_modified in pages
+    )
+    content = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{entries}\n"
+        "</urlset>\n"
+    )
+    return content, len(pages)
+
+
+def update_manifest(url_count: int) -> None:
+    manifest = read_json(MANIFEST_PATH)
+    if not manifest:
+        return
+    manifest["sitemap_urls"] = url_count
+    MANIFEST_PATH.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n"
     )
 
 
-def build_sitemap(last_modified: str) -> str:
-    entries = [
-        url_entry(SITE_URL, last_modified),
-        url_entry(f"{SITE_URL}news/", last_modified),
-    ]
-    entries.extend(url_entry(location, trade_date) for location, trade_date in daily_pages())
-    return f"""<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{chr(10).join(entries)}
-</urlset>
-"""
-
-
 def main() -> None:
-    content = build_sitemap(latest_trade_date())
-    if not SITEMAP_PATH.exists() or SITEMAP_PATH.read_text(encoding="utf-8") != content:
-        SITEMAP_PATH.write_text(content, encoding="utf-8", newline="\n")
-    print(f"sitemap generated: {SITEMAP_PATH}")
+    content, count = build_sitemap()
+    SITEMAP_PATH.write_text(content, encoding="utf-8", newline="\n")
+    update_manifest(count)
+    print(f"sitemap generated: {count} URLs -> {SITEMAP_PATH}")
 
 
 if __name__ == "__main__":

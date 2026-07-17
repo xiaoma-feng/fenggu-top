@@ -1,0 +1,11 @@
+# Generated during the GitHub Pages build and deployed from the Pages artifact.
+/stock/
+/industry/
+/theme/
+/limit-up/
+/review/
+
+/.http-server.err.log
+/.http-server.out.log
+__pycache__/
+*.pyc
