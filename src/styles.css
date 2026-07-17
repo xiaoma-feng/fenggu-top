@@ -92,7 +92,7 @@ button {
 
 #app {
   display: grid;
-  grid-template-columns: 168px minmax(0, 1fr);
+  grid-template-columns: 238px minmax(0, 1fr);
   max-width: 100%;
   min-width: 0;
   min-height: 100vh;
@@ -104,19 +104,23 @@ button {
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  max-width: 168px;
+  align-self: start;
+  height: 100dvh;
+  max-width: 238px;
   min-width: 0;
-  padding: 22px 12px;
-  position: sticky;
+  overflow: hidden;
+  padding: 26px 18px;
+  left: 0;
+  position: fixed;
   top: 0;
-  width: 168px;
+  width: 238px;
+  z-index: 20;
 }
 
 .brand {
   align-items: center;
   display: flex;
-  gap: 9px;
+  gap: 14px;
   margin-bottom: 26px;
   min-width: 0;
 }
@@ -189,6 +193,7 @@ button {
 }
 
 .shell {
+  grid-column: 2;
   max-width: 100%;
   min-width: 0;
   padding: 0 18px 28px;
@@ -474,7 +479,7 @@ button {
   align-items: start;
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(0, 1fr) 260px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
   max-width: 100%;
   min-width: 0;
   width: 100%;
@@ -499,6 +504,14 @@ button {
   position: static !important;
   top: auto !important;
   width: 100%;
+}
+
+.right-rail.is-bottom-locked {
+  left: var(--right-rail-lock-left) !important;
+  position: fixed !important;
+  top: var(--right-rail-lock-top) !important;
+  width: var(--right-rail-lock-width) !important;
+  z-index: 8;
 }
 
 .right-rail > .panel {
@@ -585,6 +598,7 @@ button {
   min-height: 0;
   overflow: visible !important;
   position: static !important;
+  top: auto !important;
 }
 
 .table-panel {
@@ -1698,6 +1712,7 @@ td {
   }
 
   .shell {
+    grid-column: auto;
     max-width: 100%;
     min-width: 0;
     padding: 0 12px 20px;

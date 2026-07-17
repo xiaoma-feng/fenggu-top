@@ -20,6 +20,7 @@ const feedbackRefreshMs = 30000;
 const intradayCacheTtlMs = 60000;
 const feedbackStorageKey = "fenggu-feedbacks";
 const layoutKey = "fenggu-layout:";
+const sharedTableLayoutKey = `${layoutKey}table-panels-v2`;
 const themeNotice = "题材来自东方财富概念数据，仅供参考";
 const limitStatsHelp = "涨停统计格式为 N/M，表示统计周期 N 天内涨停 M 次；0/0 表示没有涨停记录。";
 const downStatsHelp = "跌停统计格式为 30/M，表示近 30 天内跌停 M 次；当前跌停股票至少计 1 次。";
@@ -276,6 +277,9 @@ createApp({
     let refreshTimer = null;
     let feedbackTimer = null;
     let observer = null;
+    let rightRailResizeObserver = null;
+    let rightRailOriginTop = 0;
+    let rightRailPositionFrame = null;
     let popoverPositionFrame = null;
     let popoverDismissTimer = null;
     let popoverPointer = { x: 0, y: 0 };
@@ -1021,7 +1025,8 @@ createApp({
 
     function loadPanelSizes() {
       const next = {};
-      const panelIds = ["feedback-panel", "data-section", ...tableSections.value.map((item) => item.id)];
+      const tablePanelIds = tableSections.value.map((item) => item.id);
+      const panelIds = ["feedback-panel", ...tablePanelIds];
       for (const item of navItems.value) {
         try {
           const saved = JSON.parse(localStorage.getItem(`${layoutKey}${item.target}`) || "null");
@@ -1038,6 +1043,20 @@ createApp({
           // Ignore invalid saved layout values.
         }
       }
+      let sharedTableWidth;
+      try {
+        const sharedLayout = JSON.parse(localStorage.getItem(sharedTableLayoutKey) || "null");
+        sharedTableWidth = Number(sharedLayout?.width) || undefined;
+      } catch {
+        // Ignore invalid shared table layout values.
+      }
+      for (const id of tablePanelIds) {
+        const saved = next[id] || {};
+        next[id] = {
+          ...(saved.height ? { height: saved.height } : {}),
+          ...(sharedTableWidth ? { width: sharedTableWidth } : {}),
+        };
+      }
       panelSizes.value = next;
     }
 
@@ -1053,6 +1072,8 @@ createApp({
       const startWidth = panel.offsetWidth;
       const startHeight = panel.offsetHeight;
       const availableWidth = panel.parentElement?.clientWidth || window.innerWidth;
+      const tablePanelIds = tableSections.value.map((item) => item.id);
+      const isTablePanel = tablePanelIds.includes(id);
       function onMove(moveEvent) {
         const current = panelSizes.value[id] || {};
         const next = { ...current };
@@ -1060,10 +1081,22 @@ createApp({
           next.width = Math.min(availableWidth, Math.max(320, startWidth + moveEvent.clientX - startX));
         }
         if (axis === "y") next.height = Math.max(id === "feedback-panel" ? 140 : 260, startHeight + moveEvent.clientY - startY);
+        if (axis === "x" && isTablePanel) {
+          const linkedSizes = { ...panelSizes.value };
+          for (const tableId of tablePanelIds) {
+            linkedSizes[tableId] = { ...(linkedSizes[tableId] || {}), width: next.width };
+          }
+          panelSizes.value = linkedSizes;
+          return;
+        }
         panelSizes.value = { ...panelSizes.value, [id]: next };
       }
       function onUp() {
-        localStorage.setItem(`${layoutKey}${id}`, JSON.stringify(panelSizes.value[id] || {}));
+        if (axis === "x" && isTablePanel) {
+          localStorage.setItem(sharedTableLayoutKey, JSON.stringify({ width: panelSizes.value[id]?.width }));
+        } else {
+          localStorage.setItem(`${layoutKey}${id}`, JSON.stringify(panelSizes.value[id] || {}));
+        }
         document.body.classList.remove(resizeClass);
         window.removeEventListener("mousemove", onMove);
         window.removeEventListener("mouseup", onUp);
@@ -1381,6 +1414,80 @@ createApp({
       });
     }
 
+    function syncRightRailHeight() {
+      const rail = document.querySelector(".right-rail");
+      if (!rail) return;
+      const rect = rail.getBoundingClientRect();
+      rail.style.setProperty("--right-rail-height", `${Math.ceil(rect.height)}px`);
+      if (!rail.classList.contains("is-bottom-locked")) rightRailOriginTop = window.scrollY + rect.top;
+      scheduleRightRailLock();
+    }
+
+    function updateRightRailLock() {
+      const rail = document.querySelector(".right-rail");
+      if (!rail) return;
+      if (window.matchMedia("(max-width: 1200px)").matches) {
+        rail.classList.remove("is-bottom-locked");
+        rail.style.removeProperty("--right-rail-lock-left");
+        rail.style.removeProperty("--right-rail-lock-top");
+        rail.style.removeProperty("--right-rail-lock-width");
+        rightRailOriginTop = window.scrollY + rail.getBoundingClientRect().top;
+        return;
+      }
+      const railHeight = rail.getBoundingClientRect().height;
+      const lockTop = window.innerHeight - railHeight - 14;
+      const lockThreshold = Math.max(0, rightRailOriginTop - lockTop);
+      const shouldLock = window.scrollY >= lockThreshold;
+      if (!shouldLock) {
+        if (rail.classList.contains("is-bottom-locked")) {
+          rail.classList.remove("is-bottom-locked");
+          rail.style.removeProperty("--right-rail-lock-left");
+          rail.style.removeProperty("--right-rail-lock-top");
+          rail.style.removeProperty("--right-rail-lock-width");
+        }
+        rightRailOriginTop = window.scrollY + rail.getBoundingClientRect().top;
+        return;
+      }
+      if (!rail.classList.contains("is-bottom-locked")) {
+        const rect = rail.getBoundingClientRect();
+        rail.style.setProperty("--right-rail-lock-left", `${rect.left}px`);
+        rail.style.setProperty("--right-rail-lock-width", `${rect.width}px`);
+      }
+      rail.style.setProperty("--right-rail-lock-top", `${lockTop}px`);
+      rail.classList.add("is-bottom-locked");
+    }
+
+    function scheduleRightRailLock() {
+      if (rightRailPositionFrame) return;
+      rightRailPositionFrame = window.requestAnimationFrame(() => {
+        rightRailPositionFrame = null;
+        updateRightRailLock();
+      });
+    }
+
+    function resetRightRailLock() {
+      const rail = document.querySelector(".right-rail");
+      if (rail) {
+        rail.classList.remove("is-bottom-locked");
+        rail.style.removeProperty("--right-rail-lock-left");
+        rail.style.removeProperty("--right-rail-lock-top");
+        rail.style.removeProperty("--right-rail-lock-width");
+      }
+      window.requestAnimationFrame(syncRightRailHeight);
+    }
+
+    function setupRightRailLock() {
+      if (rightRailResizeObserver) rightRailResizeObserver.disconnect();
+      window.removeEventListener("scroll", scheduleRightRailLock);
+      window.addEventListener("scroll", scheduleRightRailLock, { passive: true });
+      syncRightRailHeight();
+      if (!("ResizeObserver" in window)) return;
+      const rail = document.querySelector(".right-rail");
+      if (!rail) return;
+      rightRailResizeObserver = new ResizeObserver(syncRightRailHeight);
+      rightRailResizeObserver.observe(rail);
+    }
+
     function startRefreshTimer() {
       refreshTimer = window.setInterval(refreshForTime, refreshMs);
       feedbackTimer = window.setInterval(loadFeedbacks, feedbackRefreshMs);
@@ -1397,6 +1504,7 @@ createApp({
     }
 
     function handleViewportChange() {
+      resetRightRailLock();
       const mobile = window.matchMedia("(max-width: 680px)").matches;
       if (mobile !== isMobileViewport.value) {
         isMobileViewport.value = mobile;
@@ -1413,11 +1521,14 @@ createApp({
 
     onMounted(async () => {
       loadPanelSizes();
+      await nextTick();
+      setupRightRailLock();
       await loadThemeProfiles();
       await loadData();
       await loadFeedbacks();
       await nextTick();
       setupObserver();
+      syncRightRailHeight();
       startRefreshTimer();
     });
 
@@ -1425,10 +1536,13 @@ createApp({
       if (refreshTimer) window.clearInterval(refreshTimer);
       if (feedbackTimer) window.clearInterval(feedbackTimer);
       if (observer) observer.disconnect();
+      if (rightRailResizeObserver) rightRailResizeObserver.disconnect();
+      if (rightRailPositionFrame) window.cancelAnimationFrame(rightRailPositionFrame);
       if (popoverPositionFrame) window.cancelAnimationFrame(popoverPositionFrame);
       if (popoverDismissTimer) window.clearTimeout(popoverDismissTimer);
       document.body.classList.remove("stock-drawer-open");
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("scroll", scheduleRightRailLock);
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("orientationchange", handleViewportChange);
     });
