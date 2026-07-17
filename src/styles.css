@@ -157,12 +157,12 @@ button {
   margin: 0;
 }
 
-.mobile-nav > summary {
-  display: none;
+.desktop-side-nav {
+  display: grid;
 }
 
-.mobile-nav:not([open]) > .side-nav {
-  display: grid;
+.mobile-nav {
+  display: none;
 }
 
 .side-nav {
@@ -1649,7 +1649,12 @@ td {
   }
 
   .mobile-nav {
+    display: block;
     width: 100%;
+  }
+
+  .desktop-side-nav {
+    display: none;
   }
 
   .mobile-nav > summary {

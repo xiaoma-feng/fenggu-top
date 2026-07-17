@@ -108,7 +108,7 @@
         ]
       }
     </script>
-    <link rel="stylesheet" href="./src/styles.css?v=20260717-layout-v3" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260717-layout-v4" />
     <script>
       function showBootFailure() {
         var app = document.getElementById("app");
@@ -134,6 +134,17 @@
             <p>A股涨停情绪数据中心</p>
           </div>
         </div>
+
+        <nav class="side-nav desktop-side-nav" aria-label="主导航">
+          <button
+            v-for="item in navItems"
+            :key="item.key"
+            :class="{ active: activeSection === item.key }"
+            @click="scrollToSection(item)"
+          >
+            {{ item.label }}
+          </button>
+        </nav>
 
         <details class="mobile-nav">
           <summary>导航菜单</summary>
