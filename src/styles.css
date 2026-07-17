@@ -481,6 +481,7 @@ button {
   gap: 14px;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
   max-width: 100%;
+  min-height: var(--right-rail-natural-height, 0px);
   min-width: 0;
   width: 100%;
 }

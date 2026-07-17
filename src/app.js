@@ -1418,7 +1418,9 @@ createApp({
       const rail = document.querySelector(".right-rail");
       if (!rail) return;
       const rect = rail.getBoundingClientRect();
-      rail.style.setProperty("--right-rail-height", `${Math.ceil(rect.height)}px`);
+      const naturalHeight = `${Math.ceil(rect.height)}px`;
+      rail.style.setProperty("--right-rail-height", naturalHeight);
+      rail.parentElement?.style.setProperty("--right-rail-natural-height", naturalHeight);
       if (!rail.classList.contains("is-bottom-locked")) rightRailOriginTop = window.scrollY + rect.top;
       scheduleRightRailLock();
     }
