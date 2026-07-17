@@ -108,7 +108,7 @@
         ]
       }
     </script>
-    <link rel="stylesheet" href="./src/styles.css?v=20260717-responsive-v1" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260717-ranking-flow-v1" />
     <script>
       function showBootFailure() {
         var app = document.getElementById("app");
@@ -148,6 +148,22 @@
             </button>
           </nav>
         </details>
+
+        <section class="support-author" aria-labelledby="support-author-title">
+          <h2 id="support-author-title">支持作者</h2>
+          <p>峰股Top 持续免费提供数据服务。</p>
+          <p>如果这个网站对你有所帮助，欢迎支持作者，请我喝杯咖啡。</p>
+          <p>你的每一份支持，都会用于服务器、域名和网站持续更新。</p>
+          <button
+            type="button"
+            class="support-open"
+            aria-haspopup="dialog"
+            aria-controls="support-dialog"
+            onclick="document.getElementById('support-dialog').showModal()"
+          >
+            支持作者
+          </button>
+        </section>
 
         <section class="sidebar-feedback resizable-panel" :style="panelStyle('feedback-panel')">
           <div class="sidebar-feedback-head">
@@ -356,7 +372,7 @@
 
           </div>
 
-          <aside id="data-section" class="right-rail resizable-panel" :style="panelStyle('data-section')">
+          <aside id="data-section" class="right-rail">
             <article class="panel">
               <div class="panel-head">
                 <h2>连板分布</h2>
@@ -425,23 +441,6 @@
               </ol>
             </article>
 
-            <article class="panel">
-              <div class="panel-head">
-                <h2>数据完整性</h2>
-                <span>{{ data.meta.data_status === 'ok' ? '正常' : '异常' }}</span>
-              </div>
-              <div class="quality-list">
-                <div v-for="item in dataCompleteness" :key="item.label">
-                  <span :class="{ ok: item.ok }"></span>
-                  <strong>{{ item.label }}</strong>
-                  <em>{{ item.count }} 条</em>
-                </div>
-              </div>
-              <p class="data-note" v-for="note in data.meta.notes || []" :key="note">{{ note }}</p>
-            </article>
-
-            <span class="resize-handle resize-x" @mousedown="startResize($event, 'data-section', 'x')"></span>
-            <span class="resize-handle resize-y" @mousedown="startResize($event, 'data-section', 'y')"></span>
           </aside>
         </section>
 
@@ -572,6 +571,23 @@
             </div>
           </form>
         </div>
+
+        <dialog id="support-dialog" class="support-dialog" aria-labelledby="support-dialog-title">
+          <form method="dialog" class="support-dialog-head">
+            <div>
+              <strong id="support-dialog-title">支持作者</strong>
+              <span>打开支付宝扫码支持</span>
+            </div>
+            <button type="submit" aria-label="关闭支持作者窗口">×</button>
+          </form>
+          <img
+            src="./assets/support-alipay.jpg"
+            alt="支付宝支持作者二维码"
+            loading="lazy"
+            decoding="async"
+          />
+          <p>感谢你对峰股Top持续更新的支持。</p>
+        </dialog>
       </main>
     </div>
 
