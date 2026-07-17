@@ -137,7 +137,7 @@ def fetch_with_retry(function_name: str, attempts: int = 3):
     raise RuntimeError(f"{function_name} returned no data")
 
 
-def fetch_eastmoney_records(attempts: int = 8) -> dict[str, dict[str, Any]]:
+def fetch_eastmoney_records(attempts: int = 4) -> dict[str, dict[str, Any]]:
     params = {
         "pn": "1",
         "pz": "6000",
@@ -157,7 +157,7 @@ def fetch_eastmoney_records(attempts: int = 8) -> dict[str, dict[str, Any]]:
                 EASTMONEY_SPOT_URL,
                 params=params,
                 headers={"User-Agent": "Mozilla/5.0", "Referer": "https://quote.eastmoney.com/"},
-                timeout=45,
+                timeout=15,
             )
             response.raise_for_status()
             rows = ((response.json().get("data") or {}).get("diff") or [])
