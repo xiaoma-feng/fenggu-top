@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-07-20",
-    "updated_at": "2026-07-20 19:53",
+    "updated_at": "2026-07-20 20:19",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -4533,7 +4533,7 @@
       "board_turnover_amount": 19709508,
       "consecutive_days": 2,
       "consecutive_down_days": 2,
-      "open_times": 15,
+      "open_times": 14,
       "concept": "低空经济、多模态AI、数字经济、雄安新区、人工智能、人脑工程、安防概念、智慧城市、物联网",
       "industry": "计算机设",
       "down_count_30d": 2,
