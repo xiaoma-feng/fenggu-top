@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-07-22",
-    "updated_at": "2026-07-22 18:04",
+    "updated_at": "2026-07-22 18:25",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -3167,7 +3167,7 @@
       "board_turnover_amount": 1447317274,
       "consecutive_days": 2,
       "consecutive_down_days": 2,
-      "open_times": 2,
+      "open_times": 1,
       "concept": "碳化硅、第三代半导体、国产芯片",
       "industry": "家电零部",
       "down_count_30d": 2,
