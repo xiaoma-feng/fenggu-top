@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-07-28",
-    "updated_at": "2026-07-28 18:35",
+    "updated_at": "2026-07-28 19:24",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -5612,7 +5612,7 @@
       "latest_price": 85.37,
       "limit_price": 92.54,
       "turnover_amount": 2871540848,
-      "turnover_rate": 0.4892662465572357,
+      "turnover_rate": 0.4892440736293793,
       "speed": 0.0,
       "is_new_high": "是",
       "volume_ratio": 1.1664173603057861,
