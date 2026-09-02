@@ -1,24 +1,24 @@
 {
-  "generated_at": "2026-09-01T14:40:06+00:00",
-  "trade_date": "2026-09-01",
+  "generated_at": "2026-09-02T12:18:31+00:00",
+  "trade_date": "2026-09-02",
   "archive_start": "2026-06-17",
   "counts": {
     "industry": 119,
     "industry_index": 1,
-    "limit_up_daily": 54,
+    "limit_up_daily": 55,
     "limit_up_index": 1,
-    "review_daily": 54,
+    "review_daily": 55,
     "review_index": 1,
-    "stock": 5558,
+    "stock": 5559,
     "stock_index": 31,
     "theme": 423,
     "theme_index": 1
   },
-  "total_pages": 6243,
-  "internal_links": 238684,
-  "stock_count": 5558,
+  "total_pages": 6246,
+  "internal_links": 238076,
+  "stock_count": 5559,
   "industry_count": 119,
   "theme_count": 423,
-  "trading_day_count": 54,
-  "sitemap_urls": 6244
+  "trading_day_count": 55,
+  "sitemap_urls": 6247
 }
