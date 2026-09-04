@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-09-04",
-    "updated_at": "2026-09-04 20:32",
+    "updated_at": "2026-09-04 21:24",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -1168,7 +1168,7 @@
       "industry": "调味发酵",
       "seal_amount": 8669490,
       "consecutive_days": 1,
-      "open_times": 15,
+      "open_times": 14,
       "reason": "",
       "limit_days_in_window": 1,
       "limit_days_window": 1,
