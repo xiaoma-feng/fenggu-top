@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-09-10",
-    "updated_at": "2026-09-10 20:21",
+    "updated_at": "2026-09-10 20:44",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -2224,7 +2224,7 @@
       "board_turnover_amount": 216143457,
       "consecutive_days": 1,
       "consecutive_down_days": 1,
-      "open_times": 27,
+      "open_times": 26,
       "concept": "光纤概念、通信技术、铜缆高速连接、F5G概念、6G概念、数据中心、边缘计算、人工智能、5G概念、物联网",
       "industry": "通信设备",
       "down_count_30d": 1,
