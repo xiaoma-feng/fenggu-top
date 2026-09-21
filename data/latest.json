@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-09-21",
-    "updated_at": "2026-09-21 23:51",
+    "updated_at": "2026-09-22 00:20",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -3584,7 +3584,7 @@
       "turnover_rate": 3.06211519241333,
       "first_limit_time": "14:37:14",
       "last_limit_time": "14:37:14",
-      "concept": "2026中报预增、小盘股、沪股通、AH股、参股期货",
+      "concept": "2026中报预增、题材股、小盘股、昨日高振幅、昨日首板、沪股通、AH股、参股期货",
       "industry": "多元金融",
       "seal_amount": 40152712,
       "consecutive_days": 1,
@@ -3596,12 +3596,15 @@
       "market_board": "主板",
       "themes": [
         "2026中报预增",
+        "题材股",
         "小盘股",
+        "昨日高振幅",
+        "昨日首板",
         "沪股通",
         "AH股",
         "参股期货"
       ],
-      "theme": "2026中报预增、小盘股、沪股通、AH股、参股期货"
+      "theme": "2026中报预增、题材股、小盘股、昨日高振幅、昨日首板、沪股通、AH股、参股期货"
     },
     {
       "code": "000532",
@@ -4281,7 +4284,7 @@
       "amplitude": 10.466034889221191,
       "first_limit_time": "13:29:10",
       "open_times": 1,
-      "concept": "标准普尔",
+      "concept": "昨日高振幅、昨日炸板、标准普尔、昨日触板",
       "industry": "化学制药",
       "reason": "",
       "limit_days_in_window": 0,
@@ -4289,9 +4292,12 @@
       "limit_stats": "30/0",
       "market_board": "主板",
       "themes": [
-        "标准普尔"
+        "昨日高振幅",
+        "昨日炸板",
+        "标准普尔",
+        "昨日触板"
       ],
-      "theme": "标准普尔"
+      "theme": "昨日高振幅、昨日炸板、标准普尔、昨日触板"
     },
     {
       "code": "002482",
@@ -22879,7 +22885,7 @@
       "code": "603093",
       "name": "南华期货",
       "industry": "多元金融",
-      "theme": "2026中报预增、小盘股、沪股通、AH股、参股期货",
+      "theme": "2026中报预增、题材股、小盘股、昨日高振幅、昨日首板、沪股通、AH股、参股期货",
       "market_board": "主板",
       "limit_count_7d": 1,
       "limit_count_30d": 2,
@@ -73843,7 +73849,7 @@
       "code": "603351",
       "name": "威尔药业",
       "industry": "化学制药",
-      "theme": "标准普尔",
+      "theme": "昨日高振幅、昨日炸板、标准普尔、昨日触板",
       "market_board": "主板",
       "limit_count_7d": 0,
       "limit_count_30d": 0,
