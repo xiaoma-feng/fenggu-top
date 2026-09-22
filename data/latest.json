@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-09-22",
-    "updated_at": "2026-09-22 22:00",
+    "updated_at": "2026-09-22 22:30",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -2520,7 +2520,7 @@
       "speed": 0.0,
       "amplitude": 3.8885600566864014,
       "first_limit_time": "09:30:33",
-      "open_times": 12,
+      "open_times": 11,
       "concept": "通信技术、存储芯片、PCB、华为概念、人工智能、5G概念",
       "industry": "元件",
       "reason": "",
