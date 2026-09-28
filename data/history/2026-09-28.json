@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-09-28",
-    "updated_at": "2026-09-29 00:30",
+    "updated_at": "2026-09-29 01:35",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -142,1208 +142,27 @@
     ]
   },
   "sentiment": {
-    "limit_up_count": 33,
+    "limit_up_count": 0,
     "limit_down_count": 56,
     "broken_limit_count": 11,
-    "highest_board": 5,
-    "first_board_count": 26,
-    "multi_board_count": 7,
-    "limit_up_turnover_amount": 22655221212,
-    "limit_up_seal_amount": 4225610795,
-    "broken_rate": 25.0,
-    "previous_trade_date": "2026-09-25",
-    "yesterday_limit_up_count": 52,
-    "promoted_count": 7,
-    "promotion_rate": 13.46,
-    "promoted_stocks": [
-      {
-        "code": "600825",
-        "name": "新华传媒",
-        "consecutive_days": 5
-      },
-      {
-        "code": "603949",
-        "name": "雪龙集团",
-        "consecutive_days": 3
-      },
-      {
-        "code": "603396",
-        "name": "金辰股份",
-        "consecutive_days": 3
-      },
-      {
-        "code": "603278",
-        "name": "大业股份",
-        "consecutive_days": 2
-      },
-      {
-        "code": "000678",
-        "name": "襄阳轴承",
-        "consecutive_days": 2
-      },
-      {
-        "code": "600802",
-        "name": "福建水泥",
-        "consecutive_days": 3
-      },
-      {
-        "code": "601218",
-        "name": "吉鑫科技",
-        "consecutive_days": 2
-      }
-    ]
+    "highest_board": 0,
+    "first_board_count": 0,
+    "multi_board_count": 0,
+    "limit_up_turnover_amount": 0,
+    "limit_up_seal_amount": 0,
+    "broken_rate": 100.0,
+    "previous_trade_date": "",
+    "yesterday_limit_up_count": 0,
+    "promoted_count": 0,
+    "promotion_rate": 0,
+    "promoted_stocks": []
   },
   "rankings": {
-    "industry_limit_rank": [
-      {
-        "name": "汽车零部",
-        "count": 3
-      },
-      {
-        "name": "通用设备",
-        "count": 3
-      },
-      {
-        "name": "软件开发",
-        "count": 2
-      },
-      {
-        "name": "化学制药",
-        "count": 2
-      },
-      {
-        "name": "光学光电",
-        "count": 2
-      },
-      {
-        "name": "电力",
-        "count": 2
-      },
-      {
-        "name": "化学制品",
-        "count": 2
-      },
-      {
-        "name": "影视院线",
-        "count": 1
-      },
-      {
-        "name": "出版",
-        "count": 1
-      },
-      {
-        "name": "光伏设备",
-        "count": 1
-      },
-      {
-        "name": "计算机设",
-        "count": 1
-      },
-      {
-        "name": "非白酒",
-        "count": 1
-      }
-    ],
-    "theme_limit_rank": [
-      {
-        "name": "央国企改革",
-        "count": 11
-      },
-      {
-        "name": "电商概念",
-        "count": 5
-      },
-      {
-        "name": "新能源车",
-        "count": 5
-      },
-      {
-        "name": "光伏概念",
-        "count": 5
-      },
-      {
-        "name": "风能",
-        "count": 5
-      },
-      {
-        "name": "一带一路",
-        "count": 5
-      },
-      {
-        "name": "军工",
-        "count": 4
-      },
-      {
-        "name": "华为概念",
-        "count": 4
-      },
-      {
-        "name": "智能驾驶",
-        "count": 4
-      },
-      {
-        "name": "AI应用",
-        "count": 3
-      },
-      {
-        "name": "氢能源",
-        "count": 3
-      },
-      {
-        "name": "数据要素",
-        "count": 3
-      }
-    ],
-    "market_board_limit_rank": [
-      {
-        "name": "主板",
-        "count": 31
-      },
-      {
-        "name": "科创板",
-        "count": 1
-      },
-      {
-        "name": "创业板",
-        "count": 1
-      }
-    ]
+    "industry_limit_rank": [],
+    "theme_limit_rank": [],
+    "market_board_limit_rank": []
   },
-  "limit_ups": [
-    {
-      "code": "001330",
-      "name": "博纳影业",
-      "change_pct": 10.034602165222168,
-      "latest_price": 6.36,
-      "turnover_amount": 261050016,
-      "float_market_cap": 7395708967.92,
-      "total_market_cap": 8741940789.12,
-      "turnover_rate": 3.529749631881714,
-      "first_limit_time": "09:25:00",
-      "last_limit_time": "09:25:00",
-      "concept": "文娱消费、AI应用、谷子经济、短剧互动游戏、AIGC概念、影视概念、西部大开发",
-      "industry": "影视院线",
-      "seal_amount": 191121816,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "文娱消费",
-        "AI应用",
-        "谷子经济",
-        "短剧互动游戏",
-        "AIGC概念",
-        "影视概念",
-        "西部大开发"
-      ],
-      "theme": "文娱消费、AI应用、谷子经济、短剧互动游戏、AIGC概念、影视概念、西部大开发"
-    },
-    {
-      "code": "600825",
-      "name": "新华传媒",
-      "change_pct": 10.038609504699707,
-      "latest_price": 8.55,
-      "turnover_amount": 42985476,
-      "float_market_cap": 8933791117.5,
-      "total_market_cap": 8933791168.800001,
-      "turnover_rate": 0.48115605115890503,
-      "first_limit_time": "09:25:01",
-      "last_limit_time": "09:25:01",
-      "concept": "并购重组概念、AI语料、独角兽、央国企改革、电商概念、创投",
-      "industry": "出版",
-      "seal_amount": 2386155340,
-      "consecutive_days": 5,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 5,
-      "limit_days_window": 5,
-      "limit_stats": "5/5",
-      "market_board": "主板",
-      "themes": [
-        "并购重组概念",
-        "AI语料",
-        "独角兽",
-        "央国企改革",
-        "电商概念",
-        "创投"
-      ],
-      "theme": "并购重组概念、AI语料、独角兽、央国企改革、电商概念、创投"
-    },
-    {
-      "code": "603949",
-      "name": "雪龙集团",
-      "change_pct": 10.0,
-      "latest_price": 18.59,
-      "turnover_amount": 299115792,
-      "float_market_cap": 3907716043.66,
-      "total_market_cap": 3917595364.54,
-      "turnover_rate": 7.795499324798584,
-      "first_limit_time": "09:30:00",
-      "last_limit_time": "09:38:45",
-      "concept": "汽车热管理、新能源车、节能环保",
-      "industry": "汽车零部",
-      "seal_amount": 50842404,
-      "consecutive_days": 3,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 3,
-      "limit_days_window": 3,
-      "limit_stats": "3/3",
-      "market_board": "主板",
-      "themes": [
-        "汽车热管理",
-        "新能源车",
-        "节能环保"
-      ],
-      "theme": "汽车热管理、新能源车、节能环保"
-    },
-    {
-      "code": "603396",
-      "name": "金辰股份",
-      "change_pct": 9.988776206970215,
-      "latest_price": 39.2,
-      "turnover_amount": 910810352,
-      "float_market_cap": 5430277137.6,
-      "total_market_cap": 5430277137.6,
-      "turnover_rate": 16.9720458984375,
-      "first_limit_time": "09:30:02",
-      "last_limit_time": "15:00:00",
-      "concept": "玻璃基板、TOPCon电池、钙钛矿电池、HJT电池、氢能源、国产芯片、光伏概念",
-      "industry": "光伏设备",
-      "seal_amount": 40203755,
-      "consecutive_days": 3,
-      "open_times": 2,
-      "reason": "",
-      "limit_days_in_window": 3,
-      "limit_days_window": 3,
-      "limit_stats": "3/3",
-      "market_board": "主板",
-      "themes": [
-        "玻璃基板",
-        "TOPCon电池",
-        "钙钛矿电池",
-        "HJT电池",
-        "氢能源",
-        "国产芯片",
-        "光伏概念"
-      ],
-      "theme": "玻璃基板、TOPCon电池、钙钛矿电池、HJT电池、氢能源、国产芯片、光伏概念"
-    },
-    {
-      "code": "002912",
-      "name": "中新赛克",
-      "change_pct": 10.01662540435791,
-      "latest_price": 26.47,
-      "turnover_amount": 209587120,
-      "float_market_cap": 4294038468.9199996,
-      "total_market_cap": 4519805440.0,
-      "turnover_rate": 4.9103522300720215,
-      "first_limit_time": "09:30:03",
-      "last_limit_time": "09:30:03",
-      "concept": "AI应用、DeepSeek概念、低空经济、数据要素、算力概念、数据安全、职业教育、工业互联网、车联网(车路云)、人工智能、国产软件、央国企改革、安防概念、网络安全、大数据、深圳特区",
-      "industry": "计算机设",
-      "seal_amount": 126403196,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 12,
-      "limit_days_window": 6,
-      "limit_stats": "12/6",
-      "market_board": "主板",
-      "themes": [
-        "AI应用",
-        "DeepSeek概念",
-        "低空经济",
-        "数据要素",
-        "算力概念",
-        "数据安全",
-        "职业教育",
-        "工业互联网",
-        "车联网(车路云)",
-        "人工智能",
-        "国产软件",
-        "央国企改革",
-        "安防概念",
-        "网络安全",
-        "大数据",
-        "深圳特区"
-      ],
-      "theme": "AI应用、DeepSeek概念、低空经济、数据要素、算力概念、数据安全、职业教育、工业互联网、车联网(车路云)、人工智能、国产软件、央国企改革、安防概念、网络安全、大数据、深圳特区"
-    },
-    {
-      "code": "601579",
-      "name": "会稽山",
-      "change_pct": 9.989484786987305,
-      "latest_price": 41.84,
-      "turnover_amount": 2223607408,
-      "float_market_cap": 20060749032.56,
-      "total_market_cap": 20060748990.72,
-      "turnover_rate": 11.245000839233398,
-      "first_limit_time": "09:30:22",
-      "last_limit_time": "15:00:00",
-      "concept": "味蕾经济、白酒",
-      "industry": "非白酒",
-      "seal_amount": 19359368,
-      "consecutive_days": 1,
-      "open_times": 4,
-      "reason": "",
-      "limit_days_in_window": 9,
-      "limit_days_window": 5,
-      "limit_stats": "9/5",
-      "market_board": "主板",
-      "themes": [
-        "味蕾经济",
-        "白酒"
-      ],
-      "theme": "味蕾经济、白酒"
-    },
-    {
-      "code": "603278",
-      "name": "大业股份",
-      "change_pct": 10.0,
-      "latest_price": 10.78,
-      "turnover_amount": 664094608,
-      "float_market_cap": 3684166245.7599998,
-      "total_market_cap": 3684166245.7599998,
-      "turnover_rate": 18.89409637451172,
-      "first_limit_time": "09:30:24",
-      "last_limit_time": "13:46:18",
-      "concept": "风能、光伏概念、新能源",
-      "industry": "通用设备",
-      "seal_amount": 44748858,
-      "consecutive_days": 2,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 2,
-      "limit_days_window": 2,
-      "limit_stats": "2/2",
-      "market_board": "主板",
-      "themes": [
-        "风能",
-        "光伏概念",
-        "新能源"
-      ],
-      "theme": "风能、光伏概念、新能源"
-    },
-    {
-      "code": "000678",
-      "name": "襄阳轴承",
-      "change_pct": 10.020661354064941,
-      "latest_price": 10.65,
-      "turnover_amount": 369427232,
-      "float_market_cap": 4894865638.05,
-      "total_market_cap": 4894865584.8,
-      "turnover_rate": 7.612004280090332,
-      "first_limit_time": "09:30:27",
-      "last_limit_time": "09:31:12",
-      "concept": "减速器、新能源车、央国企改革、军工",
-      "industry": "汽车零部",
-      "seal_amount": 76187139,
-      "consecutive_days": 2,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 2,
-      "limit_days_window": 2,
-      "limit_stats": "2/2",
-      "market_board": "主板",
-      "themes": [
-        "减速器",
-        "新能源车",
-        "央国企改革",
-        "军工"
-      ],
-      "theme": "减速器、新能源车、央国企改革、军工"
-    },
-    {
-      "code": "002640",
-      "name": "跨境通",
-      "change_pct": 10.0,
-      "latest_price": 3.96,
-      "turnover_amount": 1049611664,
-      "float_market_cap": 6131116648.8,
-      "total_market_cap": 6169843658.88,
-      "turnover_rate": 17.28204345703125,
-      "first_limit_time": "09:30:51",
-      "last_limit_time": "09:40:54",
-      "concept": "消费电子概念、跨境电商、拼多多概念、无线耳机、网红经济、电商概念、婴童概念",
-      "industry": "互联网电",
-      "seal_amount": 111994419,
-      "consecutive_days": 1,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "消费电子概念",
-        "跨境电商",
-        "拼多多概念",
-        "无线耳机",
-        "网红经济",
-        "电商概念",
-        "婴童概念"
-      ],
-      "theme": "消费电子概念、跨境电商、拼多多概念、无线耳机、网红经济、电商概念、婴童概念"
-    },
-    {
-      "code": "000503",
-      "name": "国新健康",
-      "change_pct": 10.059171676635742,
-      "latest_price": 7.44,
-      "turnover_amount": 362431760,
-      "float_market_cap": 7285197408.0,
-      "total_market_cap": 7285638451.200001,
-      "turnover_rate": 5.01840353012085,
-      "first_limit_time": "09:31:12",
-      "last_limit_time": "09:47:27",
-      "concept": "创新医疗服务、AI制药（医疗）、SPD概念、数据要素、DRG、DIP、华为概念、互联网医疗、央国企改革、电商概念",
-      "industry": "软件开发",
-      "seal_amount": 33735251,
-      "consecutive_days": 1,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "创新医疗服务",
-        "AI制药（医疗）",
-        "SPD概念",
-        "数据要素",
-        "DRG",
-        "DIP",
-        "华为概念",
-        "互联网医疗",
-        "央国企改革",
-        "电商概念"
-      ],
-      "theme": "创新医疗服务、AI制药（医疗）、SPD概念、数据要素、DRG、DIP、华为概念、互联网医疗、央国企改革、电商概念"
-    },
-    {
-      "code": "002242",
-      "name": "九阳股份",
-      "change_pct": 10.010649681091309,
-      "latest_price": 10.33,
-      "turnover_amount": 251850892,
-      "float_market_cap": 7869038906.25,
-      "total_market_cap": 7881965692.64,
-      "turnover_rate": 3.2330329418182373,
-      "first_limit_time": "09:31:15",
-      "last_limit_time": "09:36:15",
-      "concept": "净水概念、智能家居、电商概念",
-      "industry": "小家电",
-      "seal_amount": 50057992,
-      "consecutive_days": 1,
-      "open_times": 4,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "净水概念",
-        "智能家居",
-        "电商概念"
-      ],
-      "theme": "净水概念、智能家居、电商概念"
-    },
-    {
-      "code": "000513",
-      "name": "丽珠集团",
-      "change_pct": 10.007251739501953,
-      "latest_price": 30.34,
-      "turnover_amount": 842849424,
-      "float_market_cap": 17222555247.92,
-      "total_market_cap": 26939103477.12,
-      "turnover_rate": 4.9225311279296875,
-      "first_limit_time": "09:32:24",
-      "last_limit_time": "09:39:00",
-      "concept": "病原体防治、AI制药（医疗）、减肥药、创新药、重组蛋白、幽门螺杆菌概念、辅助生殖、流感、精准医疗、单抗概念、基因测序、中药概念、生物疫苗",
-      "industry": "化学制药",
-      "seal_amount": 66371784,
-      "consecutive_days": 1,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "病原体防治",
-        "AI制药（医疗）",
-        "减肥药",
-        "创新药",
-        "重组蛋白",
-        "幽门螺杆菌概念",
-        "辅助生殖",
-        "流感",
-        "精准医疗",
-        "单抗概念",
-        "基因测序",
-        "中药概念",
-        "生物疫苗"
-      ],
-      "theme": "病原体防治、AI制药（医疗）、减肥药、创新药、重组蛋白、幽门螺杆菌概念、辅助生殖、流感、精准医疗、单抗概念、基因测序、中药概念、生物疫苗"
-    },
-    {
-      "code": "002962",
-      "name": "五方光电",
-      "change_pct": 9.98509693145752,
-      "latest_price": 14.76,
-      "turnover_amount": 457594976,
-      "float_market_cap": 3088024174.8,
-      "total_market_cap": 4304980713.6,
-      "turnover_rate": 14.956378936767578,
-      "first_limit_time": "09:34:03",
-      "last_limit_time": "13:05:30",
-      "concept": "3D摄像头、华为概念、小米概念、生物识别、安防概念",
-      "industry": "光学光电",
-      "seal_amount": 27318811,
-      "consecutive_days": 1,
-      "open_times": 3,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "3D摄像头",
-        "华为概念",
-        "小米概念",
-        "生物识别",
-        "安防概念"
-      ],
-      "theme": "3D摄像头、华为概念、小米概念、生物识别、安防概念"
-    },
-    {
-      "code": "600802",
-      "name": "福建水泥",
-      "change_pct": 9.969788551330566,
-      "latest_price": 7.28,
-      "turnover_amount": 604124688,
-      "float_market_cap": 3336048352.0,
-      "total_market_cap": 3336048352.0,
-      "turnover_rate": 18.692119598388672,
-      "first_limit_time": "09:34:41",
-      "last_limit_time": "09:36:05",
-      "concept": "央国企改革",
-      "industry": "水泥",
-      "seal_amount": 61089282,
-      "consecutive_days": 3,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 3,
-      "limit_days_window": 3,
-      "limit_stats": "3/3",
-      "market_board": "主板",
-      "themes": [
-        "央国企改革"
-      ],
-      "theme": "央国企改革"
-    },
-    {
-      "code": "002347",
-      "name": "泰尔股份",
-      "change_pct": 9.931507110595703,
-      "latest_price": 6.42,
-      "turnover_amount": 311388256,
-      "float_market_cap": 3167518224.42,
-      "total_market_cap": 3240188586.24,
-      "turnover_rate": 9.975102424621582,
-      "first_limit_time": "09:36:39",
-      "last_limit_time": "10:01:00",
-      "concept": "电池技术、新型工业化、机器人概念、动力电池回收、机器视觉、智能驾驶、3D打印、锂电池概念、军工",
-      "industry": "通用设备",
-      "seal_amount": 31608870,
-      "consecutive_days": 1,
-      "open_times": 2,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "电池技术",
-        "新型工业化",
-        "机器人概念",
-        "动力电池回收",
-        "机器视觉",
-        "智能驾驶",
-        "3D打印",
-        "锂电池概念",
-        "军工"
-      ],
-      "theme": "电池技术、新型工业化、机器人概念、动力电池回收、机器视觉、智能驾驶、3D打印、锂电池概念、军工"
-    },
-    {
-      "code": "000011",
-      "name": "深物业A",
-      "change_pct": 10.0,
-      "latest_price": 10.12,
-      "turnover_amount": 185505266,
-      "float_market_cap": 5327932495.16,
-      "total_market_cap": 6031308370.559999,
-      "turnover_rate": 3.5787463188171387,
-      "first_limit_time": "09:45:33",
-      "last_limit_time": "09:46:24",
-      "concept": "租售同权、央国企改革、粤港自贸、深圳特区",
-      "industry": "房地产开",
-      "seal_amount": 113984697,
-      "consecutive_days": 1,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "租售同权",
-        "央国企改革",
-        "粤港自贸",
-        "深圳特区"
-      ],
-      "theme": "租售同权、央国企改革、粤港自贸、深圳特区"
-    },
-    {
-      "code": "600032",
-      "name": "浙江新能",
-      "change_pct": 10.074073791503906,
-      "latest_price": 7.43,
-      "turnover_amount": 441559888,
-      "float_market_cap": 17866737657.32,
-      "total_market_cap": 17866737687.04,
-      "turnover_rate": 2.5308070182800293,
-      "first_limit_time": "09:48:26",
-      "last_limit_time": "09:49:17",
-      "concept": "绿色电力、抽水蓄能、氢能源、央国企改革、风能、光伏概念、新能源",
-      "industry": "电力",
-      "seal_amount": 69763985,
-      "consecutive_days": 1,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "绿色电力",
-        "抽水蓄能",
-        "氢能源",
-        "央国企改革",
-        "风能",
-        "光伏概念",
-        "新能源"
-      ],
-      "theme": "绿色电力、抽水蓄能、氢能源、央国企改革、风能、光伏概念、新能源"
-    },
-    {
-      "code": "000980",
-      "name": "众泰汽车",
-      "change_pct": 9.803921699523926,
-      "latest_price": 2.24,
-      "turnover_amount": 1051055424,
-      "float_market_cap": 11295168279.36,
-      "total_market_cap": 11295306874.880001,
-      "turnover_rate": 9.585789680480957,
-      "first_limit_time": "09:49:09",
-      "last_limit_time": "10:13:33",
-      "concept": "中俄贸易概念、氢能源、百度概念、新能源车、智能驾驶、一带一路",
-      "industry": "汽车零部",
-      "seal_amount": 51756320,
-      "consecutive_days": 1,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "中俄贸易概念",
-        "氢能源",
-        "百度概念",
-        "新能源车",
-        "智能驾驶",
-        "一带一路"
-      ],
-      "theme": "中俄贸易概念、氢能源、百度概念、新能源车、智能驾驶、一带一路"
-    },
-    {
-      "code": "000020",
-      "name": "深华发Ａ",
-      "change_pct": 9.992486953735352,
-      "latest_price": 14.64,
-      "turnover_amount": 201884847,
-      "float_market_cap": 2652261324.2400002,
-      "total_market_cap": 4145480436.48,
-      "turnover_rate": 7.894609451293945,
-      "first_limit_time": "09:52:15",
-      "last_limit_time": "09:52:15",
-      "concept": "深圳特区",
-      "industry": "光学光电",
-      "seal_amount": 18494712,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "深圳特区"
-      ],
-      "theme": "深圳特区"
-    },
-    {
-      "code": "002480",
-      "name": "新筑股份",
-      "change_pct": 9.922179222106934,
-      "latest_price": 5.65,
-      "turnover_amount": 162545730,
-      "float_market_cap": 4336304211.150001,
-      "total_market_cap": 4345802996.8,
-      "turnover_rate": 3.831122398376465,
-      "first_limit_time": "09:52:39",
-      "last_limit_time": "10:03:39",
-      "concept": "并购重组概念、绿色电力、储能概念、磁悬浮概念、一带一路、超级电容、央国企改革、铁路基建、西部大开发",
-      "industry": "电力",
-      "seal_amount": 27684435,
-      "consecutive_days": 1,
-      "open_times": 3,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "并购重组概念",
-        "绿色电力",
-        "储能概念",
-        "磁悬浮概念",
-        "一带一路",
-        "超级电容",
-        "央国企改革",
-        "铁路基建",
-        "西部大开发"
-      ],
-      "theme": "并购重组概念、绿色电力、储能概念、磁悬浮概念、一带一路、超级电容、央国企改革、铁路基建、西部大开发"
-    },
-    {
-      "code": "600241",
-      "name": "时代万恒",
-      "change_pct": 9.986320495605469,
-      "latest_price": 8.04,
-      "turnover_amount": 144470308,
-      "float_market_cap": 2366189004.6,
-      "total_market_cap": 2366188980.4799995,
-      "turnover_rate": 6.222726821899414,
-      "first_limit_time": "10:08:11",
-      "last_limit_time": "10:08:11",
-      "concept": "电池技术、央国企改革、锂电池概念",
-      "industry": "电池",
-      "seal_amount": 12433843,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "电池技术",
-        "央国企改革",
-        "锂电池概念"
-      ],
-      "theme": "电池技术、央国企改革、锂电池概念"
-    },
-    {
-      "code": "600418",
-      "name": "江淮汽车",
-      "change_pct": 9.986916542053223,
-      "latest_price": 25.22,
-      "turnover_amount": 4392576768,
-      "float_market_cap": 56850374077.899994,
-      "total_market_cap": 56850374002.24,
-      "turnover_rate": 7.962407112121582,
-      "first_limit_time": "10:22:54",
-      "last_limit_time": "10:53:12",
-      "concept": "华为汽车、华为概念、冷链物流、百度概念、独角兽、新能源车、智能驾驶、央国企改革",
-      "industry": "商用车",
-      "seal_amount": 177014136,
-      "consecutive_days": 1,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 4,
-      "limit_days_window": 3,
-      "limit_stats": "4/3",
-      "market_board": "主板",
-      "themes": [
-        "华为汽车",
-        "华为概念",
-        "冷链物流",
-        "百度概念",
-        "独角兽",
-        "新能源车",
-        "智能驾驶",
-        "央国企改革"
-      ],
-      "theme": "华为汽车、华为概念、冷链物流、百度概念、独角兽、新能源车、智能驾驶、央国企改革"
-    },
-    {
-      "code": "001201",
-      "name": "东瑞股份",
-      "change_pct": 10.027284622192383,
-      "latest_price": 16.13,
-      "turnover_amount": 212005783,
-      "float_market_cap": 3427744281.35,
-      "total_market_cap": 4158055936.1299996,
-      "turnover_rate": 6.5019211769104,
-      "first_limit_time": "10:54:57",
-      "last_limit_time": "10:54:57",
-      "concept": "猪肉概念",
-      "industry": "养殖业",
-      "seal_amount": 17115478,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "猪肉概念"
-      ],
-      "theme": "猪肉概念"
-    },
-    {
-      "code": "002342",
-      "name": "巨力索具",
-      "change_pct": 10.012674331665039,
-      "latest_price": 8.68,
-      "turnover_amount": 2008963904,
-      "float_market_cap": 8286709200.0,
-      "total_market_cap": 8332800000.0,
-      "turnover_rate": 25.005451202392578,
-      "first_limit_time": "10:58:39",
-      "last_limit_time": "14:11:39",
-      "concept": "商业航天、白酒、雄安新区、军民融合、体育产业、海洋经济、海工装备、风能、光伏概念、新能源、军工",
-      "industry": "通用设备",
-      "seal_amount": 78274504,
-      "consecutive_days": 1,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "商业航天",
-        "白酒",
-        "雄安新区",
-        "军民融合",
-        "体育产业",
-        "海洋经济",
-        "海工装备",
-        "风能",
-        "光伏概念",
-        "新能源",
-        "军工"
-      ],
-      "theme": "商业航天、白酒、雄安新区、军民融合、体育产业、海洋经济、海工装备、风能、光伏概念、新能源、军工"
-    },
-    {
-      "code": "688244",
-      "name": "永信至诚",
-      "change_pct": 20.0,
-      "latest_price": 19.8,
-      "turnover_amount": 270535536,
-      "float_market_cap": 2989038076.2000003,
-      "total_market_cap": 2989038076.2000003,
-      "turnover_rate": 9.780817985534668,
-      "first_limit_time": "11:04:48",
-      "last_limit_time": "11:04:48",
-      "concept": "AI应用、DeepSeek概念、信创、数据安全、职业教育、商业航天、人工智能、网络安全、军工",
-      "industry": "软件开发",
-      "seal_amount": 29782704,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "科创板",
-      "themes": [
-        "AI应用",
-        "DeepSeek概念",
-        "信创",
-        "数据安全",
-        "职业教育",
-        "商业航天",
-        "人工智能",
-        "网络安全",
-        "军工"
-      ],
-      "theme": "AI应用、DeepSeek概念、信创、数据安全、职业教育、商业航天、人工智能、网络安全、军工"
-    },
-    {
-      "code": "002232",
-      "name": "启明信息",
-      "change_pct": 10.0,
-      "latest_price": 16.28,
-      "turnover_amount": 393986992,
-      "float_market_cap": 6651168847.400001,
-      "total_market_cap": 6651168733.440001,
-      "turnover_rate": 6.102713584899902,
-      "first_limit_time": "11:06:00",
-      "last_limit_time": "11:06:00",
-      "concept": "低空经济、飞行汽车(eVTOL)、数据要素、ERP概念、MLOps概念、信创、电子身份证、EDR概念、数据安全、国资云概念、华为汽车、数据中心、胎压监测、数字孪生、华为概念、百度概念、东北振兴、工业互联网、车联网(车路云)、新能源车、智能驾驶、虚拟现实、一带一路、充电桩、国产软件、央国企改革、网络安全、大数据、智慧城市、云计算",
-      "industry": "IT服务Ⅱ",
-      "seal_amount": 106776059,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "低空经济",
-        "飞行汽车(eVTOL)",
-        "数据要素",
-        "ERP概念",
-        "MLOps概念",
-        "信创",
-        "电子身份证",
-        "EDR概念",
-        "数据安全",
-        "国资云概念",
-        "华为汽车",
-        "数据中心",
-        "胎压监测",
-        "数字孪生",
-        "华为概念",
-        "百度概念",
-        "东北振兴",
-        "工业互联网",
-        "车联网(车路云)",
-        "新能源车",
-        "智能驾驶",
-        "虚拟现实",
-        "一带一路",
-        "充电桩",
-        "国产软件",
-        "央国企改革",
-        "网络安全",
-        "大数据",
-        "智慧城市",
-        "云计算"
-      ],
-      "theme": "低空经济、飞行汽车(eVTOL)、数据要素、ERP概念、MLOps概念、信创、电子身份证、EDR概念、数据安全、国资云概念、华为汽车、数据中心、胎压监测、数字孪生、华为概念、百度概念、东北振兴、工业互联网、车联网(车路云)、新能源车、智能驾驶、虚拟现实、一带一路、充电桩、国产软件、央国企改革、网络安全、大数据、智慧城市、云计算"
-    },
-    {
-      "code": "600488",
-      "name": "津药药业",
-      "change_pct": 10.0,
-      "latest_price": 6.27,
-      "turnover_amount": 621351008,
-      "float_market_cap": 6846129483.599999,
-      "total_market_cap": 6846129533.759999,
-      "turnover_rate": 9.41861343383789,
-      "first_limit_time": "13:02:09",
-      "last_limit_time": "14:27:45",
-      "concept": "辅助生殖",
-      "industry": "化学制药",
-      "seal_amount": 30956557,
-      "consecutive_days": 1,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "辅助生殖"
-      ],
-      "theme": "辅助生殖"
-    },
-    {
-      "code": "002852",
-      "name": "道道全",
-      "change_pct": 10.012360572814941,
-      "latest_price": 8.9,
-      "turnover_amount": 237995172,
-      "float_market_cap": 2543786839.4,
-      "total_market_cap": 3061317905.6,
-      "turnover_rate": 9.818922996520996,
-      "first_limit_time": "13:45:42",
-      "last_limit_time": "14:28:42",
-      "concept": "电商概念",
-      "industry": "农产品加",
-      "seal_amount": 22116767,
-      "consecutive_days": 1,
-      "open_times": 2,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "电商概念"
-      ],
-      "theme": "电商概念"
-    },
-    {
-      "code": "301190",
-      "name": "善水科技",
-      "change_pct": 20.009620666503906,
-      "latest_price": 24.95,
-      "turnover_amount": 382851184,
-      "float_market_cap": 4537257300.0,
-      "total_market_cap": 5355180675.0,
-      "turnover_rate": 9.140287399291992,
-      "first_limit_time": "13:47:00",
-      "last_limit_time": "13:47:00",
-      "concept": "病原体防治、幽门螺杆菌概念",
-      "industry": "化学原料",
-      "seal_amount": 61148757,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "创业板",
-      "themes": [
-        "病原体防治",
-        "幽门螺杆菌概念"
-      ],
-      "theme": "病原体防治、幽门螺杆菌概念"
-    },
-    {
-      "code": "601218",
-      "name": "吉鑫科技",
-      "change_pct": 10.0,
-      "latest_price": 6.05,
-      "turnover_amount": 1514983776,
-      "float_market_cap": 5862652747.599999,
-      "total_market_cap": 5862652796.0,
-      "turnover_rate": 27.325937271118164,
-      "first_limit_time": "14:26:14",
-      "last_limit_time": "14:33:14",
-      "concept": "绿色电力、风能",
-      "industry": "风电设备",
-      "seal_amount": 26760360,
-      "consecutive_days": 2,
-      "open_times": 1,
-      "reason": "",
-      "limit_days_in_window": 2,
-      "limit_days_window": 2,
-      "limit_stats": "2/2",
-      "market_board": "主板",
-      "themes": [
-        "绿色电力",
-        "风能"
-      ],
-      "theme": "绿色电力、风能"
-    },
-    {
-      "code": "605366",
-      "name": "宏柏新材",
-      "change_pct": 9.978307723999023,
-      "latest_price": 10.14,
-      "turnover_amount": 999696288,
-      "float_market_cap": 7836472878.0,
-      "total_market_cap": 7836472837.440001,
-      "turnover_rate": 13.525693893432617,
-      "first_limit_time": "14:37:06",
-      "last_limit_time": "14:37:06",
-      "concept": "光纤概念、有机硅概念、一带一路、风能、光伏概念、新材料",
-      "industry": "化学制品",
-      "seal_amount": 44892822,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "光纤概念",
-        "有机硅概念",
-        "一带一路",
-        "风能",
-        "光伏概念",
-        "新材料"
-      ],
-      "theme": "光纤概念、有机硅概念、一带一路、风能、光伏概念、新材料"
-    },
-    {
-      "code": "603968",
-      "name": "醋化股份",
-      "change_pct": 10.028382301330566,
-      "latest_price": 11.63,
-      "turnover_amount": 113396778,
-      "float_market_cap": 2378102400.0,
-      "total_market_cap": 2378102400.0,
-      "turnover_rate": 5.000324249267578,
-      "first_limit_time": "14:48:20",
-      "last_limit_time": "14:48:20",
-      "concept": "味蕾经济、代糖概念",
-      "industry": "化学制品",
-      "seal_amount": 14352594,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "味蕾经济",
-        "代糖概念"
-      ],
-      "theme": "味蕾经济、代糖概念"
-    },
-    {
-      "code": "001368",
-      "name": "通达创智",
-      "change_pct": 10.0,
-      "latest_price": 41.8,
-      "turnover_amount": 459326896,
-      "float_market_cap": 4517769038.2,
-      "total_market_cap": 4728422855.2,
-      "turnover_rate": 10.630045890808105,
-      "first_limit_time": "14:56:45",
-      "last_limit_time": "14:56:45",
-      "concept": "冰雪经济、中俄贸易概念、贬值受益、人工智能、一带一路、体育产业、医疗器械概念、婴童概念、3D打印",
-      "industry": "文娱用品",
-      "seal_amount": 5103780,
-      "consecutive_days": 1,
-      "open_times": 0,
-      "reason": "",
-      "limit_days_in_window": 1,
-      "limit_days_window": 1,
-      "limit_stats": "1/1",
-      "market_board": "主板",
-      "themes": [
-        "冰雪经济",
-        "中俄贸易概念",
-        "贬值受益",
-        "人工智能",
-        "一带一路",
-        "体育产业",
-        "医疗器械概念",
-        "婴童概念",
-        "3D打印"
-      ],
-      "theme": "冰雪经济、中俄贸易概念、贬值受益、人工智能、一带一路、体育产业、医疗器械概念、婴童概念、3D打印"
-    }
-  ],
+  "limit_ups": [],
   "broken_limits": [
     {
       "code": "000790",
@@ -9903,7 +8722,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -10193,7 +9012,7 @@
       "down_count_3y": 1,
       "first_down_date": "2026-09-16",
       "last_down_date": "2026-09-16",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -10223,7 +9042,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -10255,7 +9074,7 @@
       "down_count_3y": 1,
       "first_down_date": "2026-07-13",
       "last_down_date": "2026-07-13",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -10318,7 +9137,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -10541,7 +9360,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -10965,7 +9784,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -11222,7 +10041,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -11570,7 +10389,7 @@
       "down_count_3y": 3,
       "first_down_date": "2026-07-13",
       "last_down_date": "2026-07-15",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -12037,7 +10856,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -12229,7 +11048,7 @@
       "down_count_3y": 2,
       "first_down_date": "2026-07-17",
       "last_down_date": "2026-07-20",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -12358,7 +11177,7 @@
       "down_count_3y": 2,
       "first_down_date": "2026-08-20",
       "last_down_date": "2026-09-10",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -12485,7 +11304,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -12619,7 +11438,7 @@
       "down_count_3y": 1,
       "first_down_date": "2026-08-19",
       "last_down_date": "2026-08-19",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -12744,7 +11563,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -13122,7 +11941,7 @@
       "down_count_3y": 1,
       "first_down_date": "2026-07-06",
       "last_down_date": "2026-07-06",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -15619,7 +14438,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -16465,7 +15284,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -16770,7 +15589,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -17426,7 +16245,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -18525,7 +17344,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -20420,7 +19239,7 @@
       "down_count_3y": 1,
       "first_down_date": "2026-07-13",
       "last_down_date": "2026-07-13",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -23238,7 +22057,7 @@
       "down_count_3y": 3,
       "first_down_date": "2026-07-13",
       "last_down_date": "2026-08-19",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -23645,7 +22464,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -24646,7 +23465,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -26469,7 +25288,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -26559,7 +25378,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -26649,7 +25468,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -28179,7 +26998,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -28689,7 +27508,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -29081,7 +27900,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -29201,7 +28020,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
@@ -31945,7 +30764,7 @@
       "down_count_3y": 0,
       "first_down_date": "",
       "last_down_date": "",
-      "is_limit_today": true,
+      "is_limit_today": false,
       "is_down_today": false
     },
     {
