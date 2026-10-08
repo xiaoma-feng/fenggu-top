@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-10-08",
-    "updated_at": "2026-10-08 23:15",
+    "updated_at": "2026-10-09 00:21",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -281,15 +281,15 @@
         "count": 8
       },
       {
+        "name": "固态电池",
+        "count": 7
+      },
+      {
         "name": "储能概念",
         "count": 7
       },
       {
         "name": "创投",
-        "count": 6
-      },
-      {
-        "name": "固态电池",
         "count": 6
       },
       {
@@ -309,12 +309,12 @@
         "count": 4
       },
       {
-        "name": "华为概念",
+        "name": "并购重组概念",
         "count": 4
       },
       {
-        "name": "并购重组概念",
-        "count": 3
+        "name": "华为概念",
+        "count": 4
       }
     ],
     "market_board_limit_rank": [
@@ -348,7 +348,7 @@
       "turnover_rate": 3.2953457832336426,
       "first_limit_time": "09:25:00",
       "last_limit_time": "09:30:42",
-      "concept": "特斯拉概念、创投",
+      "concept": "固态电池、特斯拉概念、创投",
       "industry": "电池",
       "seal_amount": 142263550,
       "consecutive_days": 3,
@@ -359,10 +359,11 @@
       "limit_stats": "3/3",
       "market_board": "主板",
       "themes": [
+        "固态电池",
         "特斯拉概念",
         "创投"
       ],
-      "theme": "特斯拉概念、创投"
+      "theme": "固态电池、特斯拉概念、创投"
     },
     {
       "code": "002242",
@@ -470,7 +471,7 @@
       "turnover_rate": 0.19945743680000305,
       "first_limit_time": "09:25:02",
       "last_limit_time": "09:25:02",
-      "concept": "新型城镇化、雄安新区、PPP模式、节能环保",
+      "concept": "并购重组概念、新型城镇化、雄安新区、PPP模式、节能环保",
       "industry": "基础建设",
       "seal_amount": 150949875,
       "consecutive_days": 3,
@@ -481,12 +482,13 @@
       "limit_stats": "3/3",
       "market_board": "主板",
       "themes": [
+        "并购重组概念",
         "新型城镇化",
         "雄安新区",
         "PPP模式",
         "节能环保"
       ],
-      "theme": "新型城镇化、雄安新区、PPP模式、节能环保"
+      "theme": "并购重组概念、新型城镇化、雄安新区、PPP模式、节能环保"
     },
     {
       "code": "002687",
@@ -2947,7 +2949,7 @@
       "consecutive_days": 2,
       "consecutive_down_days": 2,
       "open_times": 5,
-      "concept": "电网概念、跨境电商、特高压、贬值受益、锂电池概念",
+      "concept": "电网概念、跨境电商、特高压、MLCC、贬值受益、锂电池概念",
       "industry": "家居用品",
       "down_count_30d": 7,
       "down_stats": "30/7",
@@ -2956,10 +2958,11 @@
         "电网概念",
         "跨境电商",
         "特高压",
+        "MLCC",
         "贬值受益",
         "锂电池概念"
       ],
-      "theme": "电网概念、跨境电商、特高压、贬值受益、锂电池概念"
+      "theme": "电网概念、跨境电商、特高压、MLCC、贬值受益、锂电池概念"
     },
     {
       "code": "688048",
@@ -10975,7 +10978,7 @@
       "code": "605303",
       "name": "园林股份",
       "industry": "基础建设",
-      "theme": "新型城镇化、雄安新区、PPP模式、节能环保",
+      "theme": "并购重组概念、新型城镇化、雄安新区、PPP模式、节能环保",
       "market_board": "主板",
       "limit_count_7d": 6,
       "limit_count_30d": 8,
@@ -11008,7 +11011,7 @@
       "code": "002058",
       "name": "紫竹高科",
       "industry": "电池",
-      "theme": "特斯拉概念、创投",
+      "theme": "固态电池、特斯拉概念、创投",
       "market_board": "主板",
       "limit_count_7d": 6,
       "limit_count_30d": 8,
@@ -12023,7 +12026,7 @@
       "code": "001216",
       "name": "华瓷股份",
       "industry": "家居用品",
-      "theme": "电网概念、跨境电商、特高压、贬值受益、锂电池概念",
+      "theme": "电网概念、跨境电商、特高压、MLCC、贬值受益、锂电池概念",
       "market_board": "主板",
       "limit_count_7d": 0,
       "limit_count_30d": 6,
