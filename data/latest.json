@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-10-09",
-    "updated_at": "2026-10-09 23:00",
+    "updated_at": "2026-10-10 00:05",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -734,7 +734,7 @@
       "turnover_rate": 11.363971710205078,
       "first_limit_time": "09:36:21",
       "last_limit_time": "09:37:51",
-      "concept": "电池技术、固态电池、新能源车、锂电池概念、化工原料",
+      "concept": "电池技术、钠离子电池、固态电池、新能源车、锂电池概念、化工原料",
       "industry": "电池",
       "seal_amount": 88444224,
       "consecutive_days": 2,
@@ -746,12 +746,13 @@
       "market_board": "主板",
       "themes": [
         "电池技术",
+        "钠离子电池",
         "固态电池",
         "新能源车",
         "锂电池概念",
         "化工原料"
       ],
-      "theme": "电池技术、固态电池、新能源车、锂电池概念、化工原料"
+      "theme": "电池技术、钠离子电池、固态电池、新能源车、锂电池概念、化工原料"
     },
     {
       "code": "001336",
@@ -15475,7 +15476,7 @@
       "code": "002805",
       "name": "丰元股份",
       "industry": "电池",
-      "theme": "电池技术、固态电池、新能源车、锂电池概念、化工原料",
+      "theme": "电池技术、钠离子电池、固态电池、新能源车、锂电池概念、化工原料",
       "market_board": "主板",
       "limit_count_7d": 2,
       "limit_count_30d": 2,
