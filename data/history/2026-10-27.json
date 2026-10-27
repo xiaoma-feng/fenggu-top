@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-10-27",
-    "updated_at": "2026-10-27 23:17",
+    "updated_at": "2026-10-27 23:47",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -3233,7 +3233,7 @@
       "turnover_rate": 2.3028104305267334,
       "seal_amount": 102554196,
       "last_limit_time": "09:31:47",
-      "board_turnover_amount": 1007698264,
+      "board_turnover_amount": 1003900466,
       "consecutive_days": 1,
       "consecutive_down_days": 1,
       "open_times": 1,
