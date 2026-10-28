@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-10-28",
-    "updated_at": "2026-10-28 23:55",
+    "updated_at": "2026-10-29 00:29",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -979,7 +979,7 @@
       "turnover_rate": 0.6452327966690063,
       "first_limit_time": "09:37:34",
       "last_limit_time": "09:37:34",
-      "concept": "股权集中、消费风格、近期新高、小盘价值、小盘股、标准普尔、富时罗素、沪股通、机构重仓",
+      "concept": "股权集中、消费风格、近期新高、小盘价值、小盘股、昨日高振幅、昨日首板、标准普尔、富时罗素、沪股通、机构重仓",
       "industry": "小家电",
       "seal_amount": 45991680,
       "consecutive_days": 1,
@@ -995,12 +995,14 @@
         "近期新高",
         "小盘价值",
         "小盘股",
+        "昨日高振幅",
+        "昨日首板",
         "标准普尔",
         "富时罗素",
         "沪股通",
         "机构重仓"
       ],
-      "theme": "股权集中、消费风格、近期新高、小盘价值、小盘股、标准普尔、富时罗素、沪股通、机构重仓"
+      "theme": "股权集中、消费风格、近期新高、小盘价值、小盘股、昨日高振幅、昨日首板、标准普尔、富时罗素、沪股通、机构重仓"
     },
     {
       "code": "603633",
@@ -3032,7 +3034,7 @@
       "amplitude": 11.417097091674805,
       "first_limit_time": "10:07:00",
       "open_times": 1,
-      "concept": "私募重仓、股权分散",
+      "concept": "私募重仓、股权分散、昨日高振幅、昨日炸板、昨日触板",
       "industry": "化学纤维",
       "reason": "",
       "limit_days_in_window": 0,
@@ -3041,9 +3043,12 @@
       "market_board": "主板",
       "themes": [
         "私募重仓",
-        "股权分散"
+        "股权分散",
+        "昨日高振幅",
+        "昨日炸板",
+        "昨日触板"
       ],
-      "theme": "私募重仓、股权分散"
+      "theme": "私募重仓、股权分散、昨日高振幅、昨日炸板、昨日触板"
     },
     {
       "code": "605488",
@@ -3433,7 +3438,7 @@
       "amplitude": 19.458494186401367,
       "first_limit_time": "10:35:09",
       "open_times": 3,
-      "concept": "基金增仓、创业板综、深股通",
+      "concept": "基金增仓、昨日高振幅、昨日炸板、创业板综、昨日触板、深股通",
       "industry": "通用设备",
       "reason": "",
       "limit_days_in_window": 0,
@@ -3442,10 +3447,13 @@
       "market_board": "创业板",
       "themes": [
         "基金增仓",
+        "昨日高振幅",
+        "昨日炸板",
         "创业板综",
+        "昨日触板",
         "深股通"
       ],
-      "theme": "基金增仓、创业板综、深股通"
+      "theme": "基金增仓、昨日高振幅、昨日炸板、创业板综、昨日触板、深股通"
     },
     {
       "code": "688698",
@@ -8343,7 +8351,7 @@
       "latest_price": 25.41,
       "limit_price": 33.67,
       "turnover_amount": 40047642,
-      "turnover_rate": 8.781804084777832,
+      "turnover_rate": 8.774645805358887,
       "open_days": 30,
       "open_date": "2026-09-09",
       "listing_date": "2026-09-09",
@@ -8952,7 +8960,7 @@
       "latest_price": 51.41,
       "limit_price": 66.28,
       "turnover_amount": 90627026,
-      "turnover_rate": 9.091447830200195,
+      "turnover_rate": 8.187417984008789,
       "open_days": 63,
       "open_date": "2026-07-24",
       "listing_date": "2026-07-24",
@@ -9015,7 +9023,7 @@
       "latest_price": 23.23,
       "limit_price": 29.64,
       "turnover_amount": 34006454,
-      "turnover_rate": 7.292543888092041,
+      "turnover_rate": 4.5518646240234375,
       "open_days": 69,
       "open_date": "2026-07-16",
       "listing_date": "2026-07-16",
@@ -29029,7 +29037,7 @@
       "code": "603868",
       "name": "飞科电器",
       "industry": "小家电",
-      "theme": "股权集中、消费风格、近期新高、小盘价值、小盘股、标准普尔、富时罗素、沪股通、机构重仓",
+      "theme": "股权集中、消费风格、近期新高、小盘价值、小盘股、昨日高振幅、昨日首板、标准普尔、富时罗素、沪股通、机构重仓",
       "market_board": "主板",
       "limit_count_7d": 1,
       "limit_count_30d": 1,
@@ -46327,7 +46335,7 @@
       "code": "603382",
       "name": "海阳科技",
       "industry": "化学纤维",
-      "theme": "私募重仓、股权分散",
+      "theme": "私募重仓、股权分散、昨日高振幅、昨日炸板、昨日触板",
       "market_board": "主板",
       "limit_count_7d": 0,
       "limit_count_30d": 0,
@@ -89391,7 +89399,7 @@
       "code": "300984",
       "name": "金沃股份",
       "industry": "通用设备",
-      "theme": "基金增仓、创业板综、深股通",
+      "theme": "基金增仓、昨日高振幅、昨日炸板、创业板综、昨日触板、深股通",
       "market_board": "创业板",
       "limit_count_7d": 0,
       "limit_count_30d": 0,
