@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-30T15:50:47+00:00",
+  "generated_at": "2026-10-30T16:38:19+00:00",
   "trade_date": "2026-10-30",
   "archive_start": "2026-06-17",
   "counts": {
@@ -11,14 +11,14 @@
     "review_index": 1,
     "stock": 5586,
     "stock_index": 32,
-    "theme": 437,
+    "theme": 438,
     "theme_index": 1
   },
-  "total_pages": 6378,
-  "internal_links": 268464,
+  "total_pages": 6379,
+  "internal_links": 268533,
   "stock_count": 5586,
   "industry_count": 125,
-  "theme_count": 437,
+  "theme_count": 438,
   "trading_day_count": 97,
-  "sitemap_urls": 6379
+  "sitemap_urls": 6380
 }
