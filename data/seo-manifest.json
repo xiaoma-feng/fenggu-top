@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-04T16:01:01+00:00",
+  "generated_at": "2026-11-04T17:06:00+00:00",
   "trade_date": "2026-11-04",
   "archive_start": "2026-06-17",
   "counts": {
@@ -15,7 +15,7 @@
     "theme_index": 1
   },
   "total_pages": 6388,
-  "internal_links": 275335,
+  "internal_links": 275325,
   "stock_count": 5587,
   "industry_count": 125,
   "theme_count": 440,

@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-11-04",
-    "updated_at": "2026-11-04 23:58",
+    "updated_at": "2026-11-05 01:03",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -5391,19 +5391,15 @@
       "consecutive_days": 1,
       "consecutive_down_days": 1,
       "open_times": 11,
-      "concept": "股权分散、昨日高振幅、昨日高换手、昨日炸板、昨日触板",
+      "concept": "股权分散",
       "industry": "化学纤维",
       "down_count_30d": 1,
       "down_stats": "30/1",
       "market_board": "主板",
       "themes": [
-        "股权分散",
-        "昨日高振幅",
-        "昨日高换手",
-        "昨日炸板",
-        "昨日触板"
+        "股权分散"
       ],
-      "theme": "股权分散、昨日高振幅、昨日高换手、昨日炸板、昨日触板"
+      "theme": "股权分散"
     },
     {
       "code": "002029",
@@ -10158,7 +10154,7 @@
       "latest_price": 43.8,
       "limit_price": 54.53,
       "turnover_amount": 30731580,
-      "turnover_rate": 9.00033950805664,
+      "turnover_rate": 3.6320395469665527,
       "open_days": 67,
       "open_date": "2026-07-27",
       "listing_date": "2026-07-27",
@@ -25611,7 +25607,7 @@
       "code": "603382",
       "name": "海阳科技",
       "industry": "化学纤维",
-      "theme": "股权分散、昨日高振幅、昨日高换手、昨日炸板、昨日触板",
+      "theme": "股权分散",
       "market_board": "主板",
       "limit_count_7d": 1,
       "limit_count_30d": 1,
