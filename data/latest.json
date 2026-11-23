@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-11-23",
-    "updated_at": "2026-11-24 05:11",
+    "updated_at": "2026-11-24 05:56",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -6084,7 +6084,7 @@
       "board_turnover_amount": 49617787,
       "consecutive_days": 1,
       "consecutive_down_days": 1,
-      "open_times": 27,
+      "open_times": 26,
       "concept": "一带一路",
       "industry": "化学纤维",
       "down_count_30d": 1,
