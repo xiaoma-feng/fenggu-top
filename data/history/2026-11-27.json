@@ -2,7 +2,7 @@
   "meta": {
     "site_name": "锋股top",
     "trade_date": "2026-11-27",
-    "updated_at": "2026-11-28 02:49",
+    "updated_at": "2026-11-28 03:23",
     "market_data_ready_time": "15:30",
     "source": "akshare + eastmoney",
     "data_status": "ok",
@@ -8985,7 +8985,7 @@
       "industry": "自动化设",
       "seal_amount": 16536762,
       "consecutive_days": 1,
-      "open_times": 10,
+      "open_times": 11,
       "reason": "",
       "limit_days_in_window": 1,
       "limit_days_window": 1,
